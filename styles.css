@@ -84,8 +84,8 @@ body {
     margin-right: auto;
     padding: 5px;
     font-size: 1em;
-    background: var(--xor-azure);
-    color: var(xor-black);
+    background: #f7f7f7;
+    color: #333333;
 }
 
 h1,
@@ -286,7 +286,7 @@ button:active {
     position: relative;
     top: 3px;
     left: 3px;
-} */
+}
 
 .log {
     font-family: 'PragmataPro', epp, inconsolata, consolas, monospace;
@@ -294,7 +294,7 @@ button:active {
     border-radius: 5px;
     padding: 5px;
     background: #111111;
-    color: #007f00;
+    color: #3f7f3f;
 }
 
 pre {
