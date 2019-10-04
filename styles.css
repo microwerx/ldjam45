@@ -14,6 +14,60 @@
     }
 }
 
+:root {
+    --xor-black: #000000;
+    --xor-gray33: #555555;
+    --xor-gray67: #AAAAAA;
+    --xor-white: #FFFFFF;
+    --xor-red: #FF0000;
+    --xor-orange: #E47200;
+    --xor-yellow: #E4E400;
+    --xor-green: #00FF00;
+    --xor-cyan: #00B4B4;
+    --xor-azure: #0072E4;
+    --xor-blue: #0000FF;
+    --xor-violet: #7200E4;
+    --xor-rose: #E40072;
+    --xor-brown: #7F3F00;
+    --xor-gold: #D4AB38;
+    --xor-forestgreen: #3F7F3F;    
+}
+
+.xor-black { color: #000000 }
+.xor-gray33 { color: #555555 }
+.xor-gray67 { color: #AAAAAA }
+.xor-white { color: #FFFFFF }
+.xor-red { color: #FF0000 }
+.xor-orange { color: #E47200 }
+.xor-yellow { color: #E4E400 }
+.xor-green { color: #00FF00 }
+.xor-cyan { color: #00B4B4 }
+.xor-azure { color: #0072E4 }
+.xor-blue { color: #0000FF }
+.xor-violet { color: #7200E4 }
+.xor-rose { color: #E40072 }
+.xor-brown { color: #7F3F00 }
+.xor-gold { color: #D4AB38 }
+.xor-forestgreen { color: #3F7F3F }
+.xor-bg-black { background: #000000 }
+.xor-bg-gray33 { background: #555555 }
+.xor-bg-gray67 { background: #AAAAAA }
+.xor-bg-white { background: #FFFFFF }
+.xor-bg-red { background: #FF0000 }
+.xor-bg-orange { background: #E47200 }
+.xor-bg-yellow { background: #E4E400 }
+.xor-bg-green { background: #00FF00 }
+.xor-bg-cyan { background: #00B4B4 }
+.xor-bg-azure { background: #0072E4 }
+.xor-bg-blue { background: #0000FF }
+.xor-bg-violet { background: #7200E4 }
+.xor-bg-rose { background: #E40072 }
+.xor-bg-brown { background: #7F3F00 }
+.xor-bg-gold { background: #D4AB38 }
+.xor-bg-forestgreen { background: #3F7F3F }
+
+
+
 html {
     display: table;
     height: 100%;
@@ -30,8 +84,8 @@ body {
     margin-right: auto;
     padding: 5px;
     font-size: 1em;
-    background: #f7f7f7;
-    color: #444444;
+    background: var(--xor-azure);
+    color: var(xor-black);
 }
 
 h1,
@@ -45,26 +99,25 @@ h6 {
     margin: 0px;
     margin-bottom: 0.25em;
 
-    color: #236192;
+    color: var(--xor-black);
 }
 
 h1 {
     margin-top: 2em;
-    margin-bottom: 1em;
     font-size: 2em;
     font-weight: bold;
     font-style: normal;
 }
 
 h2 {
-    margin-top: 2em;
+    margin-top: 0em;
     font-size: 2em;
     font-weight: bold;
     font-style: normal;
 }
 
 h3 {
-    margin-top: 1em;
+    margin-top: 0em;
     margin-bottom: 0em;
     font-size: 1em;
     font-style: normal;
@@ -95,15 +148,15 @@ em {
  * #ffffff White
 */
 a {
-    color: #A00000;
-    color: #236192;
+    color: var(--xor-blue);
+    /* color: #645; */
 
     font-weight: inherit;
-    text-decoration: none;
+    text-decoration: underline;
 }
 
 a:hover {
-    color: #efdbb2;
+    color: var(--xor-gold);
 }
 
 .equation {
@@ -116,7 +169,7 @@ a:hover {
 
 .uaf {
     color: #ffcd00;
-    background: #236192;
+    background: var(--xor-gold);
     border-radius: 5px;
     margin: auto;
     padding: 5px;
@@ -126,17 +179,17 @@ a:hover {
 }
 
 .blue {
-    color: #236192;
+    color: var(--xor-gold);
 }
 
 .bluehr {
-    background: #236192;
+    background: var(--xor-gold);
     height: 0.2em;
     border: none;
 }
 
 .goldhr {
-    background: #236192;
+    background: var(--xor-gold);
     /* background: #ffcd00; */
     height: 0.2em;
     border: none;
@@ -167,7 +220,7 @@ a:hover {
 }
 
 .left {
-    width: 20%;
+    width: 25%;
 }
 
 .right {
@@ -194,7 +247,7 @@ a:hover {
 .cell-block-dark {
     vertical-align: top;
     display: inline-block;
-    background: #dddddd;
+    background: var(--xor-gray33);
     border-radius: 5px;
     height: 100%;
 }
@@ -202,25 +255,37 @@ a:hover {
 .cell-block-light {
     vertical-align: top;
     display: inline-block;
-    background: #eeeeee;
+    background: var(--xor-gray67);
     border-radius: 5px;
     height: 100%
 }
 
-/* #project {
-    cursor: none;
-} */
-
-/* table {
-    padding: 0px;
-    width: 100%;
+/* input {
+    background: #007f00;
+    color: #922361;
+    border: none;
+}
+*/
+button {
+    margin-bottom: 5px;
+    width: 90%;
+    background: var(xor-azure);
+    color: var(xor-black);
+    border: 1px solid;
+    border-color: var(xor-black);
+    border-radius: 5px;
+    box-shadow: 3px 3px;
 }
 
-td,
-th {
-    border-radius: 5px;
-    background: lightgrey;
-    padding: 5px;
+button:hover {
+    background: #331122
+}
+
+button:active {
+    background: #442233;
+    position: relative;
+    top: 3px;
+    left: 3px;
 } */
 
 .log {
@@ -228,7 +293,8 @@ th {
     font-size: 1em;
     border-radius: 5px;
     padding: 5px;
-    background: #efdbb2;
+    background: #111111;
+    color: #007f00;
 }
 
 pre {

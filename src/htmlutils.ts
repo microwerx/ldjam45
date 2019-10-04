@@ -45,7 +45,7 @@ function createRangeRow(
     if (!isvector) {
         rContent += "<input type='range' id='" + id + "' value='" + curValue + "' min='" + minValue + "' max='" + maxValue + "' step='" + stepValue + "' />";
         rContent += "</div><div class='column left'>";
-        rContent += "<label id='" + id + "_value'></label>";
+        rContent += "<label id='" + id + "_value'>0</label>";
     } else {
         rContent += "<input type='range' id='" + id + "1' value='" + curValue + "' min='" + minValue + "' max='" + maxValue + "' step='" + stepValue + "' />";
         rContent += "<input type='range' id='" + id + "2' value='" + curValue + "' min='" + minValue + "' max='" + maxValue + "' step='" + stepValue + "' />";
@@ -73,7 +73,8 @@ function createButtonRow(
     let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
     let rContent = "<div class='column right'>";
     rContent += "<button id='" + id + "'>" + caption + "</button>";
-    rContent += "</div>";
+    rContent += "</div><div class='column left'>";
+    rContent += "<label id='" + id + "_value'>0</label>";    rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
     row.className = "row";
@@ -95,7 +96,8 @@ function createCheckRow(parent: HTMLElement, id: string, checked: boolean) {
     let rContent = "<div class='column right'>";
     let c = checked ? " checked" : "";
     rContent += "<input type='checkbox' id='" + id + "' " + c + "/>";
-    rContent += "</div>";
+    rContent += "</div><div class='column left'>";
+    rContent += "<label id='" + id + "_value'>0</label>";    rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
     row.className = "row";
@@ -128,6 +130,25 @@ function setDivRowContents(id: string, content: string) {
     e.innerHTML = content;
 }
 
+function setDivRowButtonCaption(id: string, caption: string) {
+    let e = <HTMLInputElement>document.getElementById(id);
+    if (!e) return;
+    e.innerHTML = caption;
+}
+
+/**
+ * setDivRowValue
+ * @param id the id of the input element
+ * @param content the new value the control should have
+ */
+function setDivRowValue(id: string, content: string) {
+    let e = <HTMLInputElement>document.getElementById(id);
+    if (!e) return;
+    e.value = content;
+    let l = document.getElementById(id + "_value");
+    if (l) l.innerHTML = e.value.toString();
+}
+
 /**
  * getRangeValue returns the number of a range control
  * @param {string} id 
@@ -149,6 +170,8 @@ function getRangeValue(id: string): number {
 function getCheckValue(id: string): boolean {
     let e = <HTMLInputElement>document.getElementById(id);
     if (!e) return false;
+    let l = document.getElementById(id + "_value");
+    if (l) l.innerHTML = e.value.toString();
     return e.checked;
 }
 

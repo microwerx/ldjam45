@@ -36,7 +36,7 @@ function createRangeRow(parent, id, curValue, minValue, maxValue, stepValue = 1,
     if (!isvector) {
         rContent += "<input type='range' id='" + id + "' value='" + curValue + "' min='" + minValue + "' max='" + maxValue + "' step='" + stepValue + "' />";
         rContent += "</div><div class='column left'>";
-        rContent += "<label id='" + id + "_value'></label>";
+        rContent += "<label id='" + id + "_value'>0</label>";
     }
     else {
         rContent += "<input type='range' id='" + id + "1' value='" + curValue + "' min='" + minValue + "' max='" + maxValue + "' step='" + stepValue + "' />";
@@ -60,6 +60,8 @@ function createButtonRow(parent, id, caption, callback) {
     let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
     let rContent = "<div class='column right'>";
     rContent += "<button id='" + id + "'>" + caption + "</button>";
+    rContent += "</div><div class='column left'>";
+    rContent += "<label id='" + id + "_value'>0</label>";
     rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
@@ -81,6 +83,8 @@ function createCheckRow(parent, id, checked) {
     let rContent = "<div class='column right'>";
     let c = checked ? " checked" : "";
     rContent += "<input type='checkbox' id='" + id + "' " + c + "/>";
+    rContent += "</div><div class='column left'>";
+    rContent += "<label id='" + id + "_value'>0</label>";
     rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
@@ -112,6 +116,26 @@ function setDivRowContents(id, content) {
         return;
     e.innerHTML = content;
 }
+function setDivRowButtonCaption(id, caption) {
+    let e = document.getElementById(id);
+    if (!e)
+        return;
+    e.innerHTML = caption;
+}
+/**
+ * setDivRowValue
+ * @param id the id of the input element
+ * @param content the new value the control should have
+ */
+function setDivRowValue(id, content) {
+    let e = document.getElementById(id);
+    if (!e)
+        return;
+    e.value = content;
+    let l = document.getElementById(id + "_value");
+    if (l)
+        l.innerHTML = e.value.toString();
+}
 /**
  * getRangeValue returns the number of a range control
  * @param {string} id
@@ -135,6 +159,9 @@ function getCheckValue(id) {
     let e = document.getElementById(id);
     if (!e)
         return false;
+    let l = document.getElementById(id + "_value");
+    if (l)
+        l.innerHTML = e.value.toString();
     return e.checked;
 }
 /**
@@ -164,12 +191,30 @@ class App {
         this.xor = new LibXOR("project");
         this.theta = 0;
         this.euroKeys = 0;
-        this.xmoveKeys = [["KeyA", "KeyD"], ["KeyQ", "KeyD"]];
-        this.zmoveKeys = [["KeyW", "KeyS"], ["KeyZ", "KeyS"]];
-        this.zturnKeys = [["KeyQ", "KeyE"], ["KeyA", "KeyE"]];
-        this.ymoveKeys = [["KeyC", "KeyZ"], ["KeyC", "KeyW"]];
-        this.yturnKeys = [["ArrowLeft", "ArrowRight"], ["ArrowLeft", "ArrowRight"]];
-        this.xturnKeys = [["ArrowUp", "ArrowDown"], ["ArrowUp", "ArrowDown"]];
+        this.xmoveKeys = [
+            ["KeyA", "KeyD"],
+            ["KeyQ", "KeyD"]
+        ];
+        this.zmoveKeys = [
+            ["KeyW", "KeyS"],
+            ["KeyZ", "KeyS"]
+        ];
+        this.zturnKeys = [
+            ["KeyQ", "KeyE"],
+            ["KeyA", "KeyE"]
+        ];
+        this.ymoveKeys = [
+            ["KeyC", "KeyZ"],
+            ["KeyC", "KeyW"]
+        ];
+        this.yturnKeys = [
+            ["ArrowLeft", "ArrowRight"],
+            ["ArrowLeft", "ArrowRight"]
+        ];
+        this.xturnKeys = [
+            ["ArrowUp", "ArrowDown"],
+            ["ArrowUp", "ArrowDown"]
+        ];
         this.p1x = 0;
         this.p2x = 0;
         this.p1y = 0;
@@ -186,7 +231,15 @@ class App {
             createButtonRow(controls, "bReset", "Reset", () => {
                 self.reset();
             });
-            createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => { self.euroKeys = 1 - self.euroKeys; });
+            createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => {
+                self.euroKeys = 1 - self.euroKeys;
+                if (self.euroKeys) {
+                    setDivRowValue("bZSDF", "ZQSD");
+                }
+                else {
+                    setDivRowValue("bZSDF", "WASD");
+                }
+            });
             createCheckRow(controls, "zasdKeys", false);
             createRangeRow(controls, "SOffsetX", 0, -8, 8);
             createRangeRow(controls, "SOffsetY", 0, -8, 8);
@@ -315,7 +368,7 @@ class App {
     }
     render() {
         let xor = this.xor;
-        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.WHITE, 5);
+        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 5);
         if (!this.pauseGame) {
             xor.graphics.render();
         }

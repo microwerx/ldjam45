@@ -6,12 +6,30 @@ class App {
     theta = 0;
 
     euroKeys = 0;
-    xmoveKeys = [["KeyA", "KeyD"], ["KeyQ", "KeyD"]];
-    zmoveKeys = [["KeyW", "KeyS"], ["KeyZ", "KeyS"]];
-    zturnKeys = [["KeyQ", "KeyE"], ["KeyA", "KeyE"]];
-    ymoveKeys = [["KeyC", "KeyZ"], ["KeyC", "KeyW"]];
-    yturnKeys = [["ArrowLeft", "ArrowRight"], ["ArrowLeft", "ArrowRight"]];
-    xturnKeys = [["ArrowUp", "ArrowDown"], ["ArrowUp", "ArrowDown"]];
+    xmoveKeys = [
+        ["KeyA", "KeyD"],
+        ["KeyQ", "KeyD"]
+    ];
+    zmoveKeys = [
+        ["KeyW", "KeyS"],
+        ["KeyZ", "KeyS"]
+    ];
+    zturnKeys = [
+        ["KeyQ", "KeyE"],
+        ["KeyA", "KeyE"]
+    ];
+    ymoveKeys = [
+        ["KeyC", "KeyZ"],
+        ["KeyC", "KeyW"]
+    ];
+    yturnKeys = [
+        ["ArrowLeft", "ArrowRight"],
+        ["ArrowLeft", "ArrowRight"]
+    ];
+    xturnKeys = [
+        ["ArrowUp", "ArrowDown"],
+        ["ArrowUp", "ArrowDown"]
+    ];
 
     p1x = 0;
     p2x = 0;
@@ -24,7 +42,7 @@ class App {
 
     pauseGame = false;
 
-    constructor() {      
+    constructor() {
         setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
 
         let self = this;
@@ -33,7 +51,14 @@ class App {
             createButtonRow(controls, "bReset", "Reset", () => {
                 self.reset();
             });
-            createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => { self.euroKeys = 1 - self.euroKeys; });
+            createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => {
+                self.euroKeys = 1 - self.euroKeys;
+                if (self.euroKeys) {
+                    setDivRowValue("bZSDF", "ZQSD");
+                } else {
+                    setDivRowValue("bZSDF", "WASD");
+                }
+            });
             createCheckRow(controls, "zasdKeys", false);
             createRangeRow(controls, "SOffsetX", 0, -8, 8);
             createRangeRow(controls, "SOffsetY", 0, -8, 8);
@@ -46,7 +71,7 @@ class App {
             });
             createButtonRow(controls, "bPlaySFX", "Play SFX", () => {
                 self.playSfx(getRangeValue("sfxTrack"));
-            });    
+            });
         }
 
         this.xor.triggers.set("ESC", 60.0 / 120.0);
@@ -184,7 +209,7 @@ class App {
 
     render() {
         let xor = this.xor;
-        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.WHITE, 5);
+        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 5);
 
         if (!this.pauseGame) {
             xor.graphics.render();
