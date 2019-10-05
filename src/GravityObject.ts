@@ -7,6 +7,7 @@ class GravityObject {
     private thrust_ = Vector3.make(0, 0, 0);
     life = 1.0;
     active = true;
+    angle = 0;
 
     /**
      * constructor()
@@ -16,7 +17,7 @@ class GravityObject {
     constructor(
         readonly gravitydir = 1,
         readonly mass = 1,
-        readonly radius = 1,
+        public radius = 1,
         public xor: LibXOR,
         public activeObjects: GravityObject[]
     ) {
@@ -67,7 +68,12 @@ class GravityObject {
      * reset initializes this object to its defaults
      */
     reset() {
-        this.life = 1.0;
+        this.life = 1;
+        this.angle = 0;
+        this.x.reset();
+        this.v.reset();
+        this.a.reset();
+        this.thrust_.reset();
     }
 
     /**
@@ -112,7 +118,14 @@ class GravityObject {
      * @param gobj the other object to interact with
      */
     calcInteractionForce(gobj: GravityObject) {
+        const G_a = 6.6740831e-11;
+        const p = 2;
 
+        let r = this.distanceBetweenCenters(gobj);
+        let x = gobj.dirTo(this);
+        let massRatio = this.mass * gobj.mass;
+        let a = -G_a * massRatio / Math.pow(Math.max(r, 1.0), p);
+        this.a.accum(x, a);
     }
 
     /**

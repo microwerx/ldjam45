@@ -171,6 +171,16 @@ function setDivRowValue(id, content) {
         l.innerHTML = e.value.toString();
 }
 /**
+ * setDivLabelValue
+ * @param id the id of the input element
+ * @param content the new value the control should have
+ */
+function setDivLabelValue(id, content) {
+    let l = document.getElementById(id + "_value");
+    if (l)
+        l.innerHTML = content;
+}
+/**
  * getRangeValue returns the number of a range control
  * @param {string} id
  * @returns the value of the range control or 0
@@ -218,6 +228,50 @@ function setIdToHtml(id, html) {
     }
 }
 // END HELPFUL HTML5 CODE
+/// <reference path="../../LibXOR/LibXOR.d.ts"/>
+/**
+ * randbetween returns a random number between a and b
+ * @param a the minimum random number
+ * @param b the maximum random number
+ */
+function randbetween(a, b) {
+    return Math.random() * (b - a) + a;
+}
+/**
+ * randbetweeni returns a random integer between a and b
+ * @param a the minimum random number
+ * @param b the maximum random number
+ */
+function randbetweeni(a, b) {
+    return Math.floor(Math.random() * (b - a) + a + 0.5) | 0;
+}
+/**
+ * randvector3 returns a unit vector pointing in a random direction
+ */
+function randvector3() {
+    return Vector3.makeUnit(Math.random() - 0.5, Math.random() - 0.5, 0); //Math.random() - 0.5);
+}
+/**
+ * clamp 3 returns a vector which is v clamped between minValue & maxValue
+ * @param v
+ * @param minValue
+ * @param maxValue
+ */
+function clamp3(v, minValue, maxValue) {
+    return Vector3.make(GTE.clamp(v.x, minValue, maxValue), GTE.clamp(v.y, minValue, maxValue), GTE.clamp(v.z, minValue, maxValue));
+}
+/**
+ * accum calculates a += b * scale and returns a
+ * @param a
+ * @param b
+ * @param bscale
+ */
+function accum(a, b, bscale) {
+    a.x += b.x * bscale;
+    a.y += b.y * bscale;
+    a.z += b.z * bscale;
+    return a;
+}
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 class GravityObject {
     /**
@@ -237,6 +291,7 @@ class GravityObject {
         this.thrust_ = Vector3.make(0, 0, 0);
         this.life = 1.0;
         this.active = true;
+        this.angle = 0;
     }
     /**
      * update calculates the forces and updates position & velocity
@@ -276,7 +331,12 @@ class GravityObject {
      * reset initializes this object to its defaults
      */
     reset() {
-        this.life = 1.0;
+        this.life = 1;
+        this.angle = 0;
+        this.x.reset();
+        this.v.reset();
+        this.a.reset();
+        this.thrust_.reset();
     }
     /**
      * dirTo returns a unit vector between this and gobj
@@ -316,6 +376,13 @@ class GravityObject {
      * @param gobj the other object to interact with
      */
     calcInteractionForce(gobj) {
+        const G_a = 6.6740831e-11;
+        const p = 2;
+        let r = this.distanceBetweenCenters(gobj);
+        let x = gobj.dirTo(this);
+        let massRatio = this.mass * gobj.mass;
+        let a = -G_a * massRatio / Math.pow(Math.max(r, 1.0), p);
+        this.a.accum(x, a);
     }
     /**
      *
@@ -354,6 +421,8 @@ const PlanetoidIndex = StarMaxIndex + 1;
 const PlanetoidMaxIndex = PlanetoidIndex + PlanetoidCount - 1;
 const MaxGObjects = PlanetoidMaxIndex + 1;
 const SpaceBetweenStars = 10.0;
+const MinStarRadius = 3.0;
+const MaxStarRadius = 5.0;
 const NOTHING = 0;
 const STAR = 1;
 const PLANETOID = 2;
@@ -367,6 +436,9 @@ class CommonGame {
         this.states = new StateMachine(this.xor);
         this.cells = [];
         this.numStars = 0;
+        this.numPlanetoids = 0;
+        this.minPoint = Vector3.make();
+        this.maxPoint = Vector3.make();
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
         this.gobjs = [];
@@ -382,6 +454,7 @@ class CommonGame {
         for (let i = 0; i < PlanetoidCount; i++) {
             this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
         }
+        this.resize(numCols, numRows);
     }
     init() {
         this.reset();
@@ -395,6 +468,13 @@ class CommonGame {
             }
             this.cells.push(row);
         }
+    }
+    resize(numCols, numRows) {
+        this.numCols = numCols;
+        this.numRows = numRows;
+        this.reset();
+        this.minPoint.reset(-(this.numCols + 1) * 0.5 * SpaceBetweenStars, -(this.numRows + 1) * 0.5 * SpaceBetweenStars, 0);
+        this.maxPoint.reset((this.numCols + 1) * 0.5 * SpaceBetweenStars, (this.numRows + 1) * 0.5 * SpaceBetweenStars, 0);
     }
     setStar(col, row) {
         if (col < 0 || col >= this.numCols)
@@ -422,6 +502,37 @@ class CommonGame {
         return this.cells[row][col];
     }
     update() {
+    }
+    resetPositions() {
+        let gobjs = this.gobjs;
+        let cells = this.cells;
+        let starIndex = 0;
+        let planetoidIndex = 0;
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        for (let j = 0; j < this.numRows; j++) {
+            for (let i = 0; i < this.numCols; i++) {
+                switch (cells[j][i]) {
+                    case NOTHING:
+                        break;
+                    case STAR:
+                        gobjs[StarIndex + starIndex].x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
+                        if (gobjs[StarIndex + starIndex].radius <= 1) {
+                            gobjs[StarIndex + starIndex].radius = randbetween(MinStarRadius, MaxStarRadius);
+                        }
+                        starIndex++;
+                        break;
+                    case PLANETOID:
+                        gobjs[PlanetoidCount + planetoidIndex].x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
+                        planetoidIndex++;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        this.numStars = starIndex;
+        this.numPlanetoids = planetoidIndex;
     }
 }
 /// <reference path="./CommonGame.ts" />
@@ -614,6 +725,7 @@ class StateMachine {
     }
 }
 /// <reference path="./App.ts" />
+/// <reference path="./Math.ts" />
 /// <reference path="./GravityObject.ts" />
 /// <reference path="./CommonGame.ts" />
 /// <reference path="./ExoSystemGame.ts" />
@@ -626,6 +738,8 @@ const PAUSEMODE = 3;
 const CANVASWIDTH = 512;
 const CANVASHEIGHT = 512;
 const GOBJ_PLAYER = 0;
+const EndoCenter = Vector3.make(0, 0, -10);
+const ExoCenter = Vector3.make(0, 0, -100);
 class Game {
     constructor(app, xor) {
         this.app = app;
@@ -634,6 +748,9 @@ class Game {
         this.exogame = new ExoSystemGame(this.xor, this.common);
         this.endogame = new EndoSystemGame(this.xor, this.common);
         this.mode = ENDOMODE;
+        this.level = 5;
+        this.cameraPosition = Vector3.make();
+        this.exoGridFade = 0;
         this.ovtex = null;
         this.gamePaused = false;
     }
@@ -656,6 +773,31 @@ class Game {
             this.common.states.push("ENDO", "", 0);
         if (this.mode == EXOMODE)
             this.common.states.push("EXO", "", 0);
+        this.level = 5;
+        this.common.resize(this.level, this.level);
+        let numStars = 0;
+        for (let i = 0; i < this.common.numCols * 2; i++) {
+            let col = randbetweeni(0, this.level - 1);
+            let row = randbetweeni(0, this.level - 1);
+            let result = this.common.setStar(col, row);
+            if (result) {
+                numStars++;
+                hflog.info("(" + col.toString() + ", " + row.toString() + ")");
+            }
+        }
+        hflog.info(numStars.toFixed(0) + " stars created");
+        let gl = this.xor.graphics.gl;
+        let exoGrid = this.xor.meshes.create("exoGrid");
+        exoGrid.reset();
+        exoGrid.begin(gl.LINES);
+        let t = (this.level + 2) * 0.5 * SpaceBetweenStars;
+        for (let i = 0; i <= this.level + 2; i++) {
+            exoGrid.vertex(i * SpaceBetweenStars - t, -t, 0);
+            exoGrid.vertex(i * SpaceBetweenStars - t, t, 0);
+            exoGrid.vertex(-t, i * SpaceBetweenStars - t, 0);
+            exoGrid.vertex(t, i * SpaceBetweenStars - t, 0);
+        }
+        this.common.resetPositions();
     }
     update() {
         this.common.update();
@@ -673,6 +815,21 @@ class Game {
         let state = this.common.states;
         let xor = this.xor;
         let app = this.app;
+        if (this.mode == ENDOMODE) {
+            let distance = EndoCenter.distance(this.cameraPosition);
+            if (distance > 1) {
+                let dirTo = this.cameraPosition.dirTo(EndoCenter);
+                this.cameraPosition.accum(dirTo, this.xor.dt * distance);
+            }
+        }
+        else if (this.mode == EXOMODE) {
+            let distance = ExoCenter.distance(this.cameraPosition);
+            if (distance > 1) {
+                let dirTo = this.cameraPosition.dirTo(ExoCenter);
+                this.cameraPosition.accum(dirTo, this.xor.dt * distance);
+            }
+            this.exoGridFade = GTE.clamp(1.0 - distance, 0.0, 1.0);
+        }
         if (state.topAlt == "PAUSE") {
             if (app.ESCAPEbutton && xor.triggers.get("ESC").tick(xor.t1)) {
                 state.pop();
@@ -694,65 +851,78 @@ class Game {
             this.endogame.update();
         }
         if (this.mode == EXOMODE) {
+            this.exogame.update();
         }
     }
     render() {
         let xor = this.xor;
         let gl = this.xor.graphics.gl;
-        if (this.mode == ENDOMODE) {
-            // render player
-            // render star systems
-            // render planetoids
-            let rc = this.xor.renderconfigs.use('default');
-            if (rc) {
-                for (let i = 0; i <= PlayerMaxIndex; i++) {
-                    let player = this.common.gobjs[PlayerIndex + i];
-                    if (!player.active)
-                        continue;
-                    this.renderPlayer(player, rc);
-                }
-                for (let i = 0; i <= StarMaxIndex; i++) {
-                    let star = this.common.gobjs[StarIndex + i];
-                    if (!star.active)
-                        continue;
-                    this.renderStar(star, rc);
-                }
-                for (let i = 0; i <= PlanetoidMaxIndex; i++) {
-                    let planetoid = this.common.gobjs[PlanetoidIndex + i];
-                    if (!planetoid.active)
-                        continue;
-                    this.renderPlanetoid(planetoid, rc);
-                }
+        let rc = this.xor.renderconfigs.use('default');
+        if (rc) {
+            let projMatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 100.0);
+            let cameraMatrix = Matrix4.makeTranslation3(this.cameraPosition);
+            rc.uniformMatrix4f('ProjectionMatrix', projMatrix);
+            rc.uniformMatrix4f('CameraMatrix', cameraMatrix);
+            if (this.mode == ENDOMODE) {
+                this.renderEndoMode(rc);
                 rc.restore();
             }
-        }
-        else if (this.mode == EXOMODE) {
-            let rc = this.xor.renderconfigs.use('default');
-            if (rc) {
-                for (let i = 0; i <= PlayerMaxIndex; i++) {
-                    let player = this.common.gobjs[PlayerIndex + i];
-                    if (!player.active)
-                        continue;
-                    this.renderPlayer(player, rc);
-                }
-                for (let i = 0; i <= StarMaxIndex; i++) {
-                    let star = this.common.gobjs[StarIndex + i];
-                    if (!star.active)
-                        continue;
-                    this.renderStar(star, rc);
-                }
-                for (let i = 0; i <= PlanetoidMaxIndex; i++) {
-                    let planetoid = this.common.gobjs[PlanetoidIndex + i];
-                    if (!planetoid.active)
-                        continue;
-                    this.renderPlanetoid(planetoid, rc);
-                }
+            else if (this.mode == EXOMODE) {
+                this.renderExoMode(rc);
                 rc.restore();
             }
         }
         this.updateOverlay();
         this.uploadOverlay();
         this.renderOverlay();
+    }
+    renderEndoMode(rc) {
+        // render player
+        // render star systems
+        // render planetoids
+        for (let i = 0; i <= PlayerMaxIndex; i++) {
+            let player = this.common.gobjs[PlayerIndex + i];
+            if (!player.active)
+                continue;
+            this.renderPlayer(player, rc);
+        }
+        for (let i = 0; i <= StarMaxIndex; i++) {
+            let star = this.common.gobjs[StarIndex + i];
+            if (!star.active)
+                continue;
+            this.renderStar(star, rc);
+        }
+        for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+            let planetoid = this.common.gobjs[PlanetoidIndex + i];
+            if (!planetoid.active)
+                continue;
+            this.renderPlanetoid(planetoid, rc);
+        }
+    }
+    renderExoMode(rc) {
+        rc.uniform3f("Kd", Vector3.make(1, 1, 1));
+        for (let i = 0; i <= PlayerMaxIndex; i++) {
+            let player = this.common.gobjs[PlayerIndex + i];
+            if (!player.active)
+                continue;
+            this.renderPlayer(player, rc);
+        }
+        for (let i = 0; i <= StarMaxIndex; i++) {
+            let star = this.common.gobjs[StarIndex + i];
+            if (!star.active)
+                continue;
+            this.renderStar(star, rc);
+        }
+        for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+            let planetoid = this.common.gobjs[PlanetoidIndex + i];
+            if (!planetoid.active)
+                continue;
+            this.renderPlanetoid(planetoid, rc);
+        }
+        let wm = Matrix4.makeIdentity();
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        rc.uniform3f("Kd", Vector3.make(0, this.exoGridFade, 0));
+        this.xor.meshes.render('exoGrid', rc);
     }
     renderPlayer(gobj, rc) {
         let wm = Matrix4.makeTranslation3(gobj.x);
@@ -880,8 +1050,17 @@ class App {
                     setDivRowValue("bZSDF", "WASD");
                 }
             });
-            createLabelRow(controls, "TOP", "");
-            createLabelRow(controls, "ALT", "");
+            createButtonRow(controls, "ENDOEXO", "ENDO/EXO", () => {
+                let endo = (this.game.common.states.topName == "ENDO") ? 1 : 0;
+                endo = 1 - endo;
+                this.game.common.states.clear();
+                if (endo)
+                    this.game.common.states.push("ENDO", "", 0);
+                else
+                    this.game.common.states.push("EXO", "", 0);
+            });
+            createLabelRow(controls, "TOP", "TOP");
+            createLabelRow(controls, "ALT", "ALT");
             createTextRow(controls, "SolarCode", "");
             // createRangeRow(controls, "SOffsetX", 0, -8, 8);
             // createRangeRow(controls, "SOffsetY", 0, -8, 8);
@@ -1027,8 +1206,9 @@ class App {
         let xor = this.xor;
         xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
         xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
-        setDivRowValue("TOP", this.game.common.states.topName);
-        setDivRowValue("ALT", this.game.common.states.topAlt);
+        setDivLabelValue("TOP", this.game.common.states.topName);
+        setDivLabelValue("ALT", this.game.common.states.topAlt);
+        setDivLabelValue("ALT", this.game.cameraPosition.z.toString());
     }
     /**
      * render() draws the screen
@@ -1043,20 +1223,20 @@ class App {
         }
         let pmatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 100.0);
         let cmatrix = Matrix4.makeOrbit(-90, 0, 5.0);
-        let rc = xor.renderconfigs.use('default');
-        if (rc) {
-            rc.uniformMatrix4f('ProjectionMatrix', pmatrix);
-            rc.uniformMatrix4f('CameraMatrix', cmatrix);
-            rc.uniformMatrix4f('WorldMatrix', Matrix4.makeRotation(this.theta * 30, 0, 1, 0));
-            rc.uniform3f('Kd', Vector3.make(1.0, 0.0, 0.0));
-            if (mixColor < 3)
-                xor.meshes.render('cornellbox', rc);
-            else if (mixColor < 5)
-                xor.meshes.render('square', rc);
-            else
-                xor.meshes.render('cube', rc);
-            rc.restore();
-        }
+        // let rc = xor.renderconfigs.use('default');
+        // if (rc) {
+        //     rc.uniformMatrix4f('ProjectionMatrix', pmatrix);
+        //     rc.uniformMatrix4f('CameraMatrix', cmatrix);
+        //     rc.uniformMatrix4f('WorldMatrix', Matrix4.makeRotation(this.theta * 30, 0, 1, 0));
+        //     rc.uniform3f('Kd', Vector3.make(1.0, 0.0, 0.0));
+        //     if (mixColor < 3)
+        //         xor.meshes.render('cornellbox', rc);
+        //     else if (mixColor < 5)
+        //         xor.meshes.render('square', rc);
+        //     else
+        //         xor.meshes.render('cube', rc);
+        //     rc.restore();
+        // }
         this.game.render();
     }
     /**
@@ -1080,3 +1260,4 @@ class App {
 let app = new App();
 app.init();
 app.start();
+//# sourceMappingURL=game.js.map

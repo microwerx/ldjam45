@@ -63,8 +63,15 @@ class App {
                     setDivRowValue("bZSDF", "WASD");
                 }
             });
-            createLabelRow(controls, "TOP", "");
-            createLabelRow(controls, "ALT", "");
+            createButtonRow(controls, "ENDOEXO", "ENDO/EXO", () => {
+                let endo = (this.game.common.states.topName == "ENDO") ? 1 : 0;
+                endo = 1 - endo;
+                this.game.common.states.clear();
+                if (endo) this.game.common.states.push("ENDO", "", 0);
+                else this.game.common.states.push("EXO", "", 0);
+            });
+            createLabelRow(controls, "TOP", "TOP");
+            createLabelRow(controls, "ALT", "ALT");
             createTextRow(controls, "SolarCode", "");
             // createRangeRow(controls, "SOffsetX", 0, -8, 8);
             // createRangeRow(controls, "SOffsetY", 0, -8, 8);
@@ -234,8 +241,10 @@ class App {
         let xor = this.xor;
         xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
         xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
-        setDivRowValue("TOP", this.game.common.states.topName);
-        setDivRowValue("ALT", this.game.common.states.topAlt);
+
+        setDivLabelValue("TOP", this.game.common.states.topName);
+        setDivLabelValue("ALT", this.game.common.states.topAlt);
+        setDivLabelValue("ALT", this.game.cameraPosition.z.toString());
     }
 
     /**
@@ -253,22 +262,22 @@ class App {
 
         let pmatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 100.0);
         let cmatrix = Matrix4.makeOrbit(-90, 0, 5.0);
-        let rc = xor.renderconfigs.use('default');
+        // let rc = xor.renderconfigs.use('default');
 
-        if (rc) {
-            rc.uniformMatrix4f('ProjectionMatrix', pmatrix);
-            rc.uniformMatrix4f('CameraMatrix', cmatrix);
-            rc.uniformMatrix4f('WorldMatrix', Matrix4.makeRotation(this.theta * 30, 0, 1, 0));
-            rc.uniform3f('Kd', Vector3.make(1.0, 0.0, 0.0));
-            if (mixColor < 3)
-                xor.meshes.render('cornellbox', rc);
-            else if (mixColor < 5)
-                xor.meshes.render('square', rc);
-            else
-                xor.meshes.render('cube', rc);
+        // if (rc) {
+        //     rc.uniformMatrix4f('ProjectionMatrix', pmatrix);
+        //     rc.uniformMatrix4f('CameraMatrix', cmatrix);
+        //     rc.uniformMatrix4f('WorldMatrix', Matrix4.makeRotation(this.theta * 30, 0, 1, 0));
+        //     rc.uniform3f('Kd', Vector3.make(1.0, 0.0, 0.0));
+        //     if (mixColor < 3)
+        //         xor.meshes.render('cornellbox', rc);
+        //     else if (mixColor < 5)
+        //         xor.meshes.render('square', rc);
+        //     else
+        //         xor.meshes.render('cube', rc);
 
-            rc.restore();
-        }
+        //     rc.restore();
+        // }
 
         this.game.render();
     }

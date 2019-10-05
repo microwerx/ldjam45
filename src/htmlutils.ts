@@ -186,6 +186,16 @@ function setDivRowValue(id: string, content: string) {
 }
 
 /**
+ * setDivLabelValue
+ * @param id the id of the input element
+ * @param content the new value the control should have
+ */
+function setDivLabelValue(id: string, content: string) {
+    let l = document.getElementById(id + "_value");
+    if (l) l.innerHTML = content;
+}
+
+/**
  * getRangeValue returns the number of a range control
  * @param {string} id 
  * @returns the value of the range control or 0
