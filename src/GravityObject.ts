@@ -59,7 +59,7 @@ class GravityObject {
      * boundObject
      */
     boundObject(bbox: GTE.BoundingBox) {
-        this.x = this.x.clamp3(bbox.minBounds, bbox.maxBounds);
+        this.x.clamp3(bbox.minBounds, bbox.maxBounds);
     }
 
     /**
