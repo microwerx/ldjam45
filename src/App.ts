@@ -40,7 +40,7 @@ class App {
     p2y = 0;
 
     ENTERbutton = 0;
-    BACKbutton = 0;
+    ESCAPEbutton = 0;
     SPACEbutton = 0;
     TABbutton = 0;
 
@@ -125,6 +125,7 @@ class App {
         this.xor.meshes.load('cornellbox', 'models/cornellbox_orig.obj', bbox, null);
         this.xor.meshes.load('square', 'models/square.obj', null, null);
         this.xor.meshes.load('cube', 'models/cube.obj', null, null);
+        this.xor.meshes.load('geosphere', 'models/geosphere.obj', null, null);
 
         this.xor.graphics.init();
         this.reset();
@@ -181,12 +182,11 @@ class App {
             this.reset();
         }
 
-        if (xor.input.checkKeys(["Escape"])) {
-            if (xor.triggers.get("ESC").tick(xor.t1)) {
-                this.pauseGame = !this.pauseGame;
-                hflog.info(this.pauseGame ? "paused" : "not paused");
-            }
-        }
+        this.ESCAPEbutton = xor.input.checkKeys(["Escape"]);
+        this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
+        this.ENTERbutton = xor.input.checkKeys(["Enter"]);
+        this.TABbutton = xor.input.checkKeys(["Tab"]);
+
 
         if (xor.input.checkKeys(["Space"])) {
             if (xor.triggers.get("SPC").tick(xor.t1)) {

@@ -6,6 +6,7 @@ class GravityObject {
     a = Vector3.make(0, 0, 0);
     private thrust_ = Vector3.make(0, 0, 0);
     life = 1.0;
+    active = true;
 
     /**
      * constructor()

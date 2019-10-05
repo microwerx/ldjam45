@@ -23,6 +23,8 @@ class Game {
     ovctx!: CanvasRenderingContext2D;
     ovtex: WebGLTexture | null = null;
 
+    gamePaused = false;
+
     constructor(
         public app: App,
         public xor: LibXOR) {
@@ -61,6 +63,24 @@ class Game {
             this.mode = HELPMODE;
         }
 
+        let state = this.common.states;
+        let xor = this.xor;
+        let app = this.app;
+
+        if (state.topAlt == "PAUSE") {
+            if (app.ESCAPEbutton && xor.triggers.get("ESC").tick(xor.t1)) {
+                state.pop();
+                this.gamePaused = false;
+            }
+            return;
+        } else if (state.topAlt != "PAUSE") {
+            if (app.ESCAPEbutton && this.xor.triggers.get("ESC").tick(xor.t1)) {
+                state.push(state.topName, "PAUSE", 0);
+                this.gamePaused = true;
+                return;
+            }
+        }
+
         if (this.mode == ENDOMODE) {
             let player = this.common.gobjs[GOBJ_PLAYER];
             player.thrust(this.app.p1x, this.app.p1y);
@@ -68,17 +88,14 @@ class Game {
             this.endogame.update();
         }
 
+        if (this.mode == EXOMODE) {
+
+        }
     }
 
     render() {
         let xor = this.xor;
         let gl = <WebGL2RenderingContext>this.xor.graphics.gl;
-
-        if (this.mode == HELPMODE) {
-            this.updateOverlay();
-            this.uploadOverlay();
-            this.renderOverlay();
-        }
 
         if (this.mode == ENDOMODE) {
             // render player
@@ -87,23 +104,45 @@ class Game {
             let rc = this.xor.renderconfigs.use('default');
             if (rc) {
                 let player = this.common.gobjs[GOBJ_PLAYER];
-                let wm = Matrix4.makeTranslation3(player.x);
-                rc.uniformMatrix4f("WorldMatrix", wm);
-                xor.meshes.render('cube', rc);
+                this.renderPlayer(player, rc);
 
                 // for (let e of this.common.gobjs) {
                 // }
                 rc.restore();
             }
         }
+
+        this.updateOverlay();
+        this.uploadOverlay();
+        this.renderOverlay();
+    }
+
+    renderPlayer(gobj: GravityObject, rc: FxRenderConfig) {
+        let wm = Matrix4.makeTranslation3(gobj.x);
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('cube', rc);
+    }
+
+    renderStar(gobj: GravityObject, rc: FxRenderConfig) {
+        let wm = Matrix4.makeTranslation3(gobj.x);
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('geosphere', rc);
     }
 
     updateOverlay() {
         let gfx = this.ovctx;
-        gfx.clearRect(0, 0, 512, 512);
-        gfx.font = "italic 64px biolinum";
-        gfx.fillStyle = '#000000';
-        gfx.fillText("STAR BATTLE", 0, 64);
+        gfx.clearRect(0, 0, CANVASWIDTH, CANVASHEIGHT);
+        gfx.font = (CANVASHEIGHT / 6).toString() + "px linbiolinum";
+        gfx.imageSmoothingEnabled = false;
+        gfx.fillStyle = '#FFFFFF';
+        gfx.strokeStyle = "#FF0000";
+        gfx.textAlign = "center";
+        gfx.strokeText("STAR BATTLE", CANVASWIDTH >> 1, CANVASHEIGHT >> 2);
+        if (this.gamePaused) {
+            gfx.font = "32px linlibertine";
+            gfx.fillStyle = '#FFFFFF';
+            gfx.fillText("Game Paused", CANVASWIDTH >> 1, CANVASHEIGHT >> 1);
+        }
     }
 
     uploadOverlay() {
@@ -116,11 +155,10 @@ class Game {
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
-        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ovcanvas);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        //gl.generateMipmap(gl.TEXTURE_2D);
+        gl.generateMipmap(gl.TEXTURE_2D);
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
