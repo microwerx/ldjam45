@@ -189,6 +189,7 @@ function setIdToHtml(id, html) {
 class App {
     constructor() {
         this.xor = new LibXOR("project");
+        this.ovtex = null;
         this.theta = 0;
         this.euroKeys = 0;
         this.xmoveKeys = [
@@ -284,13 +285,22 @@ class App {
         hflog.logElement = "log";
         this.xor.graphics.setVideoMode(1.5 * 384, 384);
         this.xor.input.init();
+        this.ovcanvas = document.createElement("canvas");
+        this.ovcanvas.width = 512; //this.xor.graphics.width;
+        this.ovcanvas.height = 512; //this.xor.graphics.height;
+        this.ovctx = this.ovcanvas.getContext("2d");
         this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/gbuffer.frag');
+        this.xor.renderconfigs.load('overlay', 'shaders/basic.vert', 'shaders/basic.frag');
         let bbox = new GTE.BoundingBox();
         bbox.add(Vector3.make(-1.0, -1.0, -1.0));
         bbox.add(Vector3.make(1.0, 1.0, 1.0));
         this.xor.meshes.load('cornellbox', 'models/cornellbox_orig.obj', bbox, null);
         this.xor.graphics.init();
         this.reset();
+        this.ovcanvas.width = 512;
+        this.ovcanvas.height = 512;
+        let overlayRect = this.xor.meshes.create('overlay');
+        overlayRect.rect(-1, -1, 1, 1);
         this.xor.sound.init();
         this.xor.sound.jukebox.add(0, "music/noise.mp3", false);
         this.xor.sound.jukebox.add(1, "music/maintheme.mp3", false);
@@ -299,6 +309,9 @@ class App {
         this.xor.sound.sampler.loadSample(0, "sounds/BassDrum1.wav");
         this.xor.sound.sampler.loadSample(1, "sounds/BassDrum2.wav");
     }
+    /**
+     * reset()
+     */
     reset() {
         let spr = this.xor.graphics.sprites[0];
         if (spr) {
@@ -312,9 +325,16 @@ class App {
         }
         this.pauseGame = false;
     }
+    /**
+     * start()
+     */
     start() {
         this.mainloop();
     }
+    /**
+     * update(dt)
+     * @param dt timeElapsedSinceLastFrame
+     */
     update(dt) {
         let xor = this.xor;
         xor.input.poll();
@@ -361,14 +381,22 @@ class App {
         }
         this.theta += dt;
     }
+    /**
+     * updateControls()
+     */
     updateControls() {
         let xor = this.xor;
         xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
         xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
     }
+    /**
+     * render() draws the screen
+     */
     render() {
         let xor = this.xor;
-        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 5);
+        let gl = xor.graphics.gl;
+        let mixColor = Math.floor(0.5 * (1.0 + Math.sin(xor.t1)) * 6 + 0.5);
+        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, mixColor);
         if (!this.pauseGame) {
             xor.graphics.render();
         }
@@ -383,6 +411,46 @@ class App {
             xor.meshes.render('cornellbox', rc);
             rc.restore();
         }
+        rc = xor.renderconfigs.use('overlay');
+        if (rc) {
+            rc.useDepthTest = false;
+            rc.useBlending = true;
+            rc.blendSrcFactor = gl.ONE;
+            rc.blendDstFactor = gl.ONE_MINUS_SRC_ALPHA;
+            rc.uniformMatrix4f('ProjectionMatrix', Matrix4.makePerspectiveY(90, 1.0, 1.0, 100.0));
+            rc.uniformMatrix4f('CameraMatrix', Matrix4.makeTranslation(0, 0, -1));
+            rc.uniformMatrix4f('WorldMatrix', Matrix4.makeIdentity());
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
+            rc.uniform1f('MapKdMix', 1.0);
+            rc.uniform1i('MapKd', 0);
+            this.xor.meshes.render('overlay', rc);
+            rc.restore();
+        }
+    }
+    /**
+     * renderOverlay() renders graphics on top of the canvas
+     */
+    renderOverlay() {
+        let gl = this.xor.graphics.gl;
+        let gfx = this.ovctx;
+        if (!this.ovtex) {
+            this.ovtex = gl.createTexture();
+        }
+        if (!this.ovtex)
+            return;
+        gfx.clearRect(0, 0, 512, 512);
+        gfx.font = "italic 64px biolinum";
+        gfx.fillStyle = '#000000';
+        gfx.fillText("the llama paradox", 0, 64);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
+        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ovcanvas);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        //gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
     }
     mainloop() {
         let self = this;
@@ -392,6 +460,7 @@ class App {
             self.xor.sound.update();
             self.update(self.xor.dt);
             self.render();
+            self.renderOverlay();
             self.mainloop();
         });
     }

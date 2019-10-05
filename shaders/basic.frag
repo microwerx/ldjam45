@@ -24,11 +24,13 @@ out vec4 oFragColor;
 void main() {
     // set to white
     vec3 color = vec3(0.0);
+    float alpha = 1.0;
     if (MapKdMix > 0.0) {
-        vec3 map = texture(MapKd, vTexcoord.st).rgb;
-        color += map;    
+        vec4 map = texture(MapKd, vTexcoord.st);
+        color += map.rgb;    
+        alpha = map.a;
     } else {
         color += vColor;
     }
-    oFragColor = vec4(color, 1.0);
+    oFragColor = vec4(color, alpha);
 }
