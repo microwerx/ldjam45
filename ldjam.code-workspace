@@ -4,7 +4,7 @@
 			"path": "."
 		},
 		{
-			"path": "/home/jonathanmetzgar/github/LibXOR"
+			"path": "../LibXOR"
 		}
 	],
 	"settings": {}
