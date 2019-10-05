@@ -1,11 +1,14 @@
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 /// <reference path="./htmlutils.ts" />
+/// <reference path="./Game.ts" />
 
 class App {
     xor = new LibXOR("project");
     ovcanvas!: HTMLCanvasElement;
     ovctx!: CanvasRenderingContext2D;
     ovtex: WebGLTexture | null = null;
+
+    game = new Game();
 
     theta = 0;
 
