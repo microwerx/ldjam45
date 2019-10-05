@@ -110,6 +110,22 @@ function createTextRow(parent, id, value) {
     parent.appendChild(row);
 }
 /**
+ * createTextRow adds a button to the control list
+ * @param {HTMLElement} parent The parent HTMLElement
+ * @param {string} id The name of the label's id
+ * @param {string} value The initial value of the string
+ */
+function createLabelRow(parent, id, value) {
+    let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
+    let rContent = "<div class='column right'>";
+    rContent += "<label id='" + id + "_value'>" + value + "</label>";
+    rContent += "</div>";
+    let row = createRow(lContent, rContent);
+    row.id = "row" + id;
+    row.className = "row";
+    parent.appendChild(row);
+}
+/**
  * createDivRow adds a row to the control list
  * @param {HTMLElement} parent The parent HTMLElement
  * @param {string} id The name of the row's id
@@ -203,11 +219,387 @@ function setIdToHtml(id, html) {
 }
 // END HELPFUL HTML5 CODE
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
+class GravityObject {
+    /**
+     * constructor()
+     * @param gravitydir positive means pull, negative means push
+     * @param mass mass in kilograms of this object
+     */
+    constructor(gravitydir = 1, mass = 1, radius = 1, xor, activeObjects) {
+        this.gravitydir = gravitydir;
+        this.mass = mass;
+        this.radius = radius;
+        this.xor = xor;
+        this.activeObjects = activeObjects;
+        this.x = Vector3.make(0, 0, 0);
+        this.v = Vector3.make(0, 0, 0);
+        this.a = Vector3.make(0, 0, 0);
+        this.thrust_ = Vector3.make(0, 0, 0);
+        this.life = 1.0;
+    }
+    /**
+     * update calculates the forces and updates position & velocity
+     * @param dt the time step in seconds and updates occur every 1ms
+     */
+    update(dt) {
+        const steps = Math.floor(dt * 1000 + 0.5);
+        // Calculate force
+        for (let i = 0; i < steps; i++) {
+            this.updateForces();
+            this.applyForces();
+        }
+    }
+    /**
+     * resetForces initializes acceleration to 0
+     */
+    resetForces() {
+        this.a.reset();
+    }
+    /**
+     * updateForces calculates forces between interacting objects
+     */
+    updateForces() {
+    }
+    /**
+     * applyForces calculates new position and velocity
+     */
+    applyForces() {
+    }
+    /**
+     * boundObject
+     */
+    boundObject(bbox) {
+        this.x.clamp3(bbox.minBounds, bbox.maxBounds);
+    }
+    /**
+     * reset initializes this object to its defaults
+     */
+    reset() {
+        this.life = 1.0;
+    }
+    /**
+     * dirTo returns a unit vector between this and gobj
+     * @param gobj the other object to compare
+     */
+    dirTo(gobj) {
+        return this.x.sub(gobj.x).normalize();
+    }
+    /**
+     * distanceBetween is the distance between the two spheres
+     * @param gobj the other object to compare
+     */
+    distanceBetween(gobj) {
+        let totalRadius = this.radius + gobj.radius;
+        return this.x.distance(gobj.x) - totalRadius;
+    }
+    /**
+     * distanceBetweenCenters is the distance between the centers
+     * of the two objects
+     * @param gobj the other object to compare
+     */
+    distanceBetweenCenters(gobj) {
+        return this.x.distance(gobj.x);
+    }
+    /**
+     * detectCollision detects if the signed distance is less than zero
+     * @param gobj the other object to compare
+     */
+    detectCollision(gobj) {
+        if (gobj.distanceBetween(this) < 0)
+            return true;
+        return false;
+    }
+    /**
+     * calcInteractionForce determines the force to apply between the two
+     * objects
+     * @param gobj the other object to interact with
+     */
+    calcInteractionForce(gobj) {
+    }
+    /**
+     *
+     * @param x horizontal force applied to the object
+     * @param y vertical force applied to the object
+     */
+    thrust(x, y) {
+        this.thrust_.reset(x, y, 0);
+    }
+    /**
+     * Returns the burn factor from this object to the next.
+     * This only works from big objects to small objects.
+     * Burn factor goes from 0 to 100
+     * @param gobj
+     */
+    burn(gobj) {
+        if (gobj.mass >= this.mass)
+            return 0;
+        return GTE.clamp(this.mass / gobj.mass, 0, 100);
+    }
+}
+class CommonGame {
+    constructor(xor) {
+        this.xor = xor;
+        this.gobjs = [];
+        this.gold = 0;
+        this.states = new StateMachine(this.xor);
+    }
+    init() {
+        this.reset();
+    }
+    reset() {
+        this.gobjs = [];
+        this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+    }
+    update() {
+        this.states.update(this.xor.t1);
+        for (let gobj of this.gobjs) {
+            gobj.update(this.xor.dt);
+        }
+    }
+}
+/// <reference path="./CommonGame.ts" />
+class ExoSystemGame {
+    constructor(xor, common) {
+        this.xor = xor;
+        this.common = common;
+    }
+    init() {
+        this.reset();
+    }
+    reset() {
+    }
+    update() {
+    }
+}
+/// <reference path="./CommonGame.ts" />
+class EndoSystemGame {
+    constructor(xor, common) {
+        this.xor = xor;
+        this.common = common;
+    }
+    init() {
+        this.reset();
+    }
+    reset() {
+    }
+    update() {
+    }
+}
+class State {
+    constructor(name, alt = "NONE", delayTime = 0, queueSound = 0, queueMusic = 0) {
+        this.name = name;
+        this.alt = alt;
+        this.delayTime = delayTime;
+        this.queueSound = queueSound;
+        this.queueMusic = queueMusic;
+    }
+}
+/// <reference path="./State.ts" />
+class StateMachine {
+    constructor(xor) {
+        this.xor = xor;
+        this.states = [];
+        this._t1 = 0;
+    }
+    clear() {
+        this.states = [];
+    }
+    update(tInSeconds) {
+        this._t1 = tInSeconds;
+        let topTime = this.topTime;
+        if (topTime > 0 && topTime < tInSeconds) {
+            this.pop();
+            this.xor.sound.sampler.playSample(this.topSound);
+        }
+    }
+    push(name, alt, delayTime) {
+        if (delayTime > 0)
+            delayTime += this._t1;
+        this.states.push(new State(name, alt, delayTime));
+    }
+    pushwithsound(name, alt, delayTime, sound, music) {
+        if (delayTime > 0)
+            delayTime += this._t1;
+        this.states.push(new State(name, alt, delayTime, sound, music));
+        this.push(name, "PAUSE", 0.01);
+    }
+    pop() {
+        if (this.states.length)
+            this.states.pop();
+    }
+    get topName() {
+        let l = this.states.length;
+        if (l > 0) {
+            return this.states[l - 1].name;
+        }
+        return "NONE";
+    }
+    get topAlt() {
+        let l = this.states.length;
+        if (l > 0) {
+            return this.states[l - 1].alt;
+        }
+        return "NONE";
+    }
+    get topTime() {
+        let l = this.states.length;
+        if (l > 0) {
+            return this.states[l - 1].delayTime;
+        }
+        return -1;
+    }
+    get topSound() {
+        let l = this.states.length;
+        if (l > 0) {
+            return this.states[l - 1].queueSound;
+        }
+        return -1;
+    }
+    get topMusic() {
+        let l = this.states.length;
+        if (l > 0) {
+            return this.states[l - 1].queueMusic;
+        }
+        return -1;
+    }
+}
+/// <reference path="./App.ts" />
+/// <reference path="./GravityObject.ts" />
+/// <reference path="./CommonGame.ts" />
+/// <reference path="./ExoSystemGame.ts" />
+/// <reference path="./EndoSystemGame.ts" />
+/// <reference path="./StateMachine.ts" />
+const HELPMODE = 0;
+const EXOMODE = 1;
+const ENDOMODE = 2;
+const PAUSEMODE = 3;
+const CANVASWIDTH = 512;
+const CANVASHEIGHT = 512;
+const GOBJ_PLAYER = 0;
+class Game {
+    constructor(app, xor) {
+        this.app = app;
+        this.xor = xor;
+        this.common = new CommonGame(this.xor);
+        this.exogame = new ExoSystemGame(this.xor, this.common);
+        this.endogame = new EndoSystemGame(this.xor, this.common);
+        this.mode = ENDOMODE;
+        this.ovtex = null;
+    }
+    init() {
+        this.ovcanvas = document.createElement("canvas");
+        this.ovcanvas.width = CANVASWIDTH;
+        this.ovcanvas.height = CANVASHEIGHT;
+        this.ovctx = this.ovcanvas.getContext("2d");
+        let overlayRect = this.xor.meshes.create('overlay');
+        overlayRect.rect(-1, -1, 1, 1);
+        this.reset();
+        this.common.init();
+        this.endogame.init();
+        this.exogame.init();
+    }
+    reset() {
+        if (this.mode == HELPMODE)
+            this.common.states.push("HELP", "", 0);
+        if (this.mode == ENDOMODE)
+            this.common.states.push("ENDO", "", 0);
+        if (this.mode == EXOMODE)
+            this.common.states.push("EXO", "", 0);
+    }
+    update() {
+        this.common.update();
+        if (this.common.states.topName == "ENDO") {
+            this.endogame.update();
+            this.mode = ENDOMODE;
+        }
+        else if (this.common.states.topName == "EXO") {
+            this.exogame.update();
+            this.mode = EXOMODE;
+        }
+        else if (this.common.states.topName == "HELP") {
+            this.mode = HELPMODE;
+        }
+        if (this.mode == ENDOMODE) {
+            let player = this.common.gobjs[GOBJ_PLAYER];
+            player.thrust(this.app.p1x, this.app.p1y);
+            player.x.accum(Vector3.make(this.app.p1x, this.app.p1y, 0), this.xor.dt);
+            this.endogame.update();
+        }
+    }
+    render() {
+        let xor = this.xor;
+        let gl = this.xor.graphics.gl;
+        if (this.mode == HELPMODE) {
+            this.updateOverlay();
+            this.uploadOverlay();
+            this.renderOverlay();
+        }
+        if (this.mode == ENDOMODE) {
+            // render player
+            // render star systems
+            // render planetoids
+            let rc = this.xor.renderconfigs.use('default');
+            if (rc) {
+                let player = this.common.gobjs[GOBJ_PLAYER];
+                let wm = Matrix4.makeTranslation3(player.x);
+                rc.uniformMatrix4f("WorldMatrix", wm);
+                xor.meshes.render('cube', rc);
+                // for (let e of this.common.gobjs) {
+                // }
+                rc.restore();
+            }
+        }
+    }
+    updateOverlay() {
+        let gfx = this.ovctx;
+        gfx.clearRect(0, 0, 512, 512);
+        gfx.font = "italic 64px biolinum";
+        gfx.fillStyle = '#000000';
+        gfx.fillText("STAR BATTLE", 0, 64);
+    }
+    uploadOverlay() {
+        let gl = this.xor.graphics.gl;
+        if (!this.ovtex) {
+            this.ovtex = gl.createTexture();
+        }
+        if (!this.ovtex)
+            return;
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
+        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ovcanvas);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        //gl.generateMipmap(gl.TEXTURE_2D);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+    }
+    renderOverlay() {
+        let gl = this.xor.graphics.gl;
+        let rc = this.xor.renderconfigs.use('overlay');
+        if (rc) {
+            rc.useDepthTest = false;
+            rc.useBlending = true;
+            rc.blendSrcFactor = gl.ONE;
+            rc.blendDstFactor = gl.ONE_MINUS_SRC_ALPHA;
+            rc.uniformMatrix4f('ProjectionMatrix', Matrix4.makePerspectiveY(90, 1.0, 1.0, 100.0));
+            rc.uniformMatrix4f('CameraMatrix', Matrix4.makeTranslation(0, 0, -1));
+            rc.uniformMatrix4f('WorldMatrix', Matrix4.makeIdentity());
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
+            rc.uniform1f('MapKdMix', 1.0);
+            rc.uniform1i('MapKd', 0);
+            this.xor.meshes.render('overlay', rc);
+            rc.restore();
+        }
+    }
+}
+/// <reference path="../../LibXOR/LibXOR.d.ts" />
 /// <reference path="./htmlutils.ts" />
+/// <reference path="./Game.ts" />
 class App {
     constructor() {
         this.xor = new LibXOR("project");
-        this.ovtex = null;
+        this.game = new Game(this, this.xor);
         this.theta = 0;
         this.euroKeys = 0;
         this.xmoveKeys = [
@@ -259,12 +651,13 @@ class App {
                     setDivRowValue("bZSDF", "WASD");
                 }
             });
+            createLabelRow(controls, "TOP", "");
+            createLabelRow(controls, "ALT", "");
             createTextRow(controls, "SolarCode", "");
-            createCheckRow(controls, "zasdKeys", false);
-            createRangeRow(controls, "SOffsetX", 0, -8, 8);
-            createRangeRow(controls, "SOffsetY", 0, -8, 8);
-            createRangeRow(controls, "SZoomX", 1.0, 0.0, 4.0, 0.1);
-            createRangeRow(controls, "SZoomY", 1.0, 0.0, 4.0, 0.1);
+            // createRangeRow(controls, "SOffsetX", 0, -8, 8);
+            // createRangeRow(controls, "SOffsetY", 0, -8, 8);
+            // createRangeRow(controls, "SZoomX", 1.0, 0.0, 4.0, 0.1);
+            // createRangeRow(controls, "SZoomY", 1.0, 0.0, 4.0, 0.1);
             createRangeRow(controls, "playTrack", 0, 0, 7);
             createRangeRow(controls, "sfxTrack", 0, 0, 15);
             createButtonRow(controls, "bPlayTrack", "Play Track", () => {
@@ -304,22 +697,17 @@ class App {
         hflog.logElement = "log";
         this.xor.graphics.setVideoMode(1.5 * 384, 384);
         this.xor.input.init();
-        this.ovcanvas = document.createElement("canvas");
-        this.ovcanvas.width = 512; //this.xor.graphics.width;
-        this.ovcanvas.height = 512; //this.xor.graphics.height;
-        this.ovctx = this.ovcanvas.getContext("2d");
-        this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/gbuffer.frag');
+        let defaultrc = this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/gbuffer.frag');
         this.xor.renderconfigs.load('overlay', 'shaders/basic.vert', 'shaders/basic.frag');
+        defaultrc.useCullFace = true;
         let bbox = new GTE.BoundingBox();
         bbox.add(Vector3.make(-1.0, -1.0, -1.0));
         bbox.add(Vector3.make(1.0, 1.0, 1.0));
         this.xor.meshes.load('cornellbox', 'models/cornellbox_orig.obj', bbox, null);
+        this.xor.meshes.load('square', 'models/square.obj', null, null);
+        this.xor.meshes.load('cube', 'models/cube.obj', null, null);
         this.xor.graphics.init();
         this.reset();
-        this.ovcanvas.width = 512;
-        this.ovcanvas.height = 512;
-        let overlayRect = this.xor.meshes.create('overlay');
-        overlayRect.rect(-1, -1, 1, 1);
         this.xor.sound.init();
         this.xor.sound.jukebox.add(0, "music/noise.mp3", false);
         this.xor.sound.jukebox.add(1, "music/maintheme.mp3", false);
@@ -327,6 +715,8 @@ class App {
         this.xor.sound.jukebox.add(3, "music/arcadetheme.mp3", false);
         this.xor.sound.sampler.loadSample(0, "sounds/BassDrum1.wav");
         this.xor.sound.sampler.loadSample(1, "sounds/BassDrum2.wav");
+        this.game = new Game(this, this.xor);
+        this.game.init();
     }
     /**
      * reset()
@@ -343,6 +733,7 @@ class App {
             spr.position.reset(58, 50, 0);
         }
         this.pauseGame = false;
+        this.game.reset();
     }
     /**
      * start()
@@ -399,6 +790,7 @@ class App {
             let y = xor.input.mouse.position.y;
         }
         this.theta += dt;
+        this.game.update();
     }
     /**
      * updateControls()
@@ -407,6 +799,8 @@ class App {
         let xor = this.xor;
         xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
         xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
+        setDivRowValue("TOP", this.game.common.states.topName);
+        setDivRowValue("ALT", this.game.common.states.topAlt);
     }
     /**
      * render() draws the screen
@@ -415,7 +809,7 @@ class App {
         let xor = this.xor;
         let gl = xor.graphics.gl;
         let mixColor = Math.floor(0.5 * (1.0 + Math.sin(xor.t1)) * 6 + 0.5);
-        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, mixColor);
+        xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 6);
         if (!this.pauseGame) {
             xor.graphics.render();
         }
@@ -427,49 +821,20 @@ class App {
             rc.uniformMatrix4f('CameraMatrix', cmatrix);
             rc.uniformMatrix4f('WorldMatrix', Matrix4.makeRotation(this.theta * 30, 0, 1, 0));
             rc.uniform3f('Kd', Vector3.make(1.0, 0.0, 0.0));
-            xor.meshes.render('cornellbox', rc);
+            if (mixColor < 3)
+                xor.meshes.render('cornellbox', rc);
+            else if (mixColor < 5)
+                xor.meshes.render('square', rc);
+            else
+                xor.meshes.render('cube', rc);
             rc.restore();
         }
-        rc = xor.renderconfigs.use('overlay');
-        if (rc) {
-            rc.useDepthTest = false;
-            rc.useBlending = true;
-            rc.blendSrcFactor = gl.ONE;
-            rc.blendDstFactor = gl.ONE_MINUS_SRC_ALPHA;
-            rc.uniformMatrix4f('ProjectionMatrix', Matrix4.makePerspectiveY(90, 1.0, 1.0, 100.0));
-            rc.uniformMatrix4f('CameraMatrix', Matrix4.makeTranslation(0, 0, -1));
-            rc.uniformMatrix4f('WorldMatrix', Matrix4.makeIdentity());
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
-            rc.uniform1f('MapKdMix', 1.0);
-            rc.uniform1i('MapKd', 0);
-            this.xor.meshes.render('overlay', rc);
-            rc.restore();
-        }
+        this.game.render();
     }
     /**
      * renderOverlay() renders graphics on top of the canvas
      */
     renderOverlay() {
-        let gl = this.xor.graphics.gl;
-        let gfx = this.ovctx;
-        if (!this.ovtex) {
-            this.ovtex = gl.createTexture();
-        }
-        if (!this.ovtex)
-            return;
-        gfx.clearRect(0, 0, 512, 512);
-        gfx.font = "italic 64px biolinum";
-        gfx.fillStyle = '#000000';
-        gfx.fillText("the llama paradox", 0, 64);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.ovtex);
-        // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, this.ovcanvas);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        //gl.generateMipmap(gl.TEXTURE_2D);
-        gl.bindTexture(gl.TEXTURE_2D, null);
     }
     mainloop() {
         let self = this;
@@ -487,46 +852,3 @@ class App {
 let app = new App();
 app.init();
 app.start();
-/// <reference path="../../LibXOR/LibXOR.d.ts" />
-class GravityObject {
-    /**
-     * constructor()
-     * @param gravitydir positive means pull, negative means push
-     * @param mass mass in kilograms of this object
-     */
-    constructor(gravitydir = 1, mass = 1, xor) {
-        this.gravitydir = gravitydir;
-        this.mass = mass;
-        this.xor = xor;
-        this.position = Vector3.make(0, 0, 0);
-        this.velocity = Vector3.make(0, 0, 0);
-        this.accel = Vector3.make(0, 0, 0);
-        this.life = 1.0;
-    }
-    update(dt) {
-    }
-    reset() {
-        this.life = 1.0;
-    }
-    interact(gobj) {
-    }
-    thrust(x, y) {
-    }
-    /**
-     * Returns the burn factor from this object to the next.
-     * This only works from big objects to small objects.
-     * Burn factor goes from 0 to 100
-     * @param gobj
-     */
-    burn(gobj) {
-        if (gobj.mass >= this.mass)
-            return 0;
-        return GTE.clamp(this.mass / gobj.mass, 0, 100);
-    }
-}
-/// <reference path="./GravityObject.ts" />
-class Game {
-    constructor() {
-        this.gobjs = [];
-    }
-}

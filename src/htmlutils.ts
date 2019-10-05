@@ -124,6 +124,23 @@ function createTextRow(parent: HTMLElement, id: string, value: string) {
 }
 
 /**
+ * createTextRow adds a button to the control list
+ * @param {HTMLElement} parent The parent HTMLElement
+ * @param {string} id The name of the label's id
+ * @param {string} value The initial value of the string
+ */
+function createLabelRow(parent: HTMLElement, id: string, value: string) {
+    let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
+    let rContent = "<div class='column right'>";
+    rContent += "<label id='" + id + "_value'>" + value + "</label>";
+    rContent += "</div>";
+    let row = createRow(lContent, rContent);
+    row.id = "row" + id;
+    row.className = "row";
+    parent.appendChild(row);
+}
+
+/**
  * createDivRow adds a row to the control list
  * @param {HTMLElement} parent The parent HTMLElement
  * @param {string} id The name of the row's id
