@@ -1,7 +1,21 @@
 /// <reference path="./CommonGame.ts" />
 
 class ExoSystemGame {
-    constructor(common: CommonGame) {
+    constructor(
+        public xor: LibXOR,
+        public common: CommonGame) {
+
+    }
+
+    init() {
+        this.reset();
+    }
+
+    reset() {
+
+    }
+
+    update() {
 
     }
 }

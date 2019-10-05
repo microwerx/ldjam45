@@ -5,20 +5,33 @@
 /// <reference path="./StateMachine.ts" />
 
 class Game {
-    gobjs: GravityObject[] = [];
-    common = new CommonGame();
+    common = new CommonGame(this.xor);
     exogame = new ExoSystemGame(this.common);
     endogame = new EndoSystemGame(this.common);
 
-    states: StateMachine;
-
-    constructor() {
+    constructor(public xor: LibXOR) {
 
     }
 
+    init() {
+        this.reset();
+        this.common.init();
+        this.endogame.init();
+        this.exogame.init();
+    }
+
+    reset() {
+        this.common.states.push("HELP", "", 0);
+    }
+
     update() {
-        if (this.states..isEndo) {
-            states.push(["ENDO", ""])
+        this.common.update();
+        if (this.common.states.topName == "ENDO") {
+            this.endogame.update();
+        } else if (this.common.states.topName == "EXO") {
+            this.exogame.update();
+        } else if (this.common.states.topName == "HELP") {
+
         }
     }
 }
