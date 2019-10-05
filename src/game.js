@@ -487,3 +487,46 @@ class App {
 let app = new App();
 app.init();
 app.start();
+/// <reference path="../../LibXOR/LibXOR.d.ts" />
+class GravityObject {
+    /**
+     * constructor()
+     * @param gravitydir positive means pull, negative means push
+     * @param mass mass in kilograms of this object
+     */
+    constructor(gravitydir = 1, mass = 1, xor) {
+        this.gravitydir = gravitydir;
+        this.mass = mass;
+        this.xor = xor;
+        this.position = Vector3.make(0, 0, 0);
+        this.velocity = Vector3.make(0, 0, 0);
+        this.accel = Vector3.make(0, 0, 0);
+        this.life = 1.0;
+    }
+    update(dt) {
+    }
+    reset() {
+        this.life = 1.0;
+    }
+    interact(gobj) {
+    }
+    thrust(x, y) {
+    }
+    /**
+     * Returns the burn factor from this object to the next.
+     * This only works from big objects to small objects.
+     * Burn factor goes from 0 to 100
+     * @param gobj
+     */
+    burn(gobj) {
+        if (gobj.mass >= this.mass)
+            return 0;
+        return GTE.clamp(this.mass / gobj.mass, 0, 100);
+    }
+}
+/// <reference path="./GravityObject.ts" />
+class Game {
+    constructor() {
+        this.gobjs = [];
+    }
+}
