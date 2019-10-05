@@ -103,11 +103,25 @@ class Game {
             // render planetoids
             let rc = this.xor.renderconfigs.use('default');
             if (rc) {
-                let player = this.common.gobjs[GOBJ_PLAYER];
-                this.renderPlayer(player, rc);
 
-                // for (let e of this.common.gobjs) {
-                // }
+                for (let i = 0; i <= PlayerMaxIndex; i++) {
+                    let player = this.common.gobjs[PlayerIndex + i];
+                    if (!player.active) continue;
+                    this.renderPlayer(player, rc);
+                }
+
+                for (let i = 0; i <= StarMaxIndex; i++) {
+                    let star = this.common.gobjs[StarIndex + i];
+                    if (!star.active) continue;
+                    this.renderStar(star, rc);
+                }
+
+                for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+                    let planetoid = this.common.gobjs[PlanetoidIndex + i];
+                    if (!planetoid.active) continue;
+                    this.renderPlanetoid(planetoid, rc);
+                }
+
                 rc.restore();
             }
         }
@@ -119,12 +133,21 @@ class Game {
 
     renderPlayer(gobj: GravityObject, rc: FxRenderConfig) {
         let wm = Matrix4.makeTranslation3(gobj.x);
+        wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('cube', rc);
     }
 
     renderStar(gobj: GravityObject, rc: FxRenderConfig) {
         let wm = Matrix4.makeTranslation3(gobj.x);
+        wm.scale(gobj.radius, gobj.radius, gobj.radius);
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('geosphere', rc);
+    }
+
+    renderPlanetoid(gobj: GravityObject, rc: FxRenderConfig) {
+        let wm = Matrix4.makeTranslation3(gobj.x);
+        wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('geosphere', rc);
     }
