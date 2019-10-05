@@ -37,11 +37,26 @@ class CommonGame {
     cells: number[][] = [];
     numStars: number = 0;
 
-    constructor(public xor: LibXOR,
+    constructor(
+        public xor: LibXOR,
         readonly numCols = 4,
-        readonly numRows = 4) {
+        readonly numRows = 4
+    ) {
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
+        this.gobjs = [];
+        for (let i = 0; i < PlayerCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < MissileCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < StarCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < PlanetoidCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
     }
 
     init() {
@@ -49,11 +64,6 @@ class CommonGame {
     }
 
     reset() {
-        this.gobjs = [];
-        for (let i = 0; i < PlayerCount; i++) {
-            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
-        }
-
         this.cells = [];
         for (let j = 0; j < this.numRows; j++) {
             let row: number[] = [];

@@ -19,6 +19,8 @@ class EndoSystemGame {
         let gobjs = this.common.gobjs;
         let cells = this.common.cells;
 
+        if (gobjs.length < MaxGObjects) return;
+
         // update physics locations
         let starIndex = 0;
         let planetoidIndex = 0;

@@ -124,6 +124,30 @@ class Game {
 
                 rc.restore();
             }
+        } else if (this.mode == EXOMODE) {
+            let rc = this.xor.renderconfigs.use('default');
+            if (rc) {
+
+                for (let i = 0; i <= PlayerMaxIndex; i++) {
+                    let player = this.common.gobjs[PlayerIndex + i];
+                    if (!player.active) continue;
+                    this.renderPlayer(player, rc);
+                }
+
+                for (let i = 0; i <= StarMaxIndex; i++) {
+                    let star = this.common.gobjs[StarIndex + i];
+                    if (!star.active) continue;
+                    this.renderStar(star, rc);
+                }
+
+                for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+                    let planetoid = this.common.gobjs[PlanetoidIndex + i];
+                    if (!planetoid.active) continue;
+                    this.renderPlanetoid(planetoid, rc);
+                }
+
+                rc.restore();
+            }
         }
 
         this.updateOverlay();

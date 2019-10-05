@@ -369,15 +369,24 @@ class CommonGame {
         this.numStars = 0;
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
+        this.gobjs = [];
+        for (let i = 0; i < PlayerCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < MissileCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < StarCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
+        for (let i = 0; i < PlanetoidCount; i++) {
+            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
+        }
     }
     init() {
         this.reset();
     }
     reset() {
-        this.gobjs = [];
-        for (let i = 0; i < PlayerCount; i++) {
-            this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
-        }
         this.cells = [];
         for (let j = 0; j < this.numRows; j++) {
             let row = [];
@@ -443,6 +452,8 @@ class EndoSystemGame {
     update() {
         let gobjs = this.common.gobjs;
         let cells = this.common.cells;
+        if (gobjs.length < MaxGObjects)
+            return;
         // update physics locations
         let starIndex = 0;
         let planetoidIndex = 0;
@@ -692,6 +703,30 @@ class Game {
             // render player
             // render star systems
             // render planetoids
+            let rc = this.xor.renderconfigs.use('default');
+            if (rc) {
+                for (let i = 0; i <= PlayerMaxIndex; i++) {
+                    let player = this.common.gobjs[PlayerIndex + i];
+                    if (!player.active)
+                        continue;
+                    this.renderPlayer(player, rc);
+                }
+                for (let i = 0; i <= StarMaxIndex; i++) {
+                    let star = this.common.gobjs[StarIndex + i];
+                    if (!star.active)
+                        continue;
+                    this.renderStar(star, rc);
+                }
+                for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+                    let planetoid = this.common.gobjs[PlanetoidIndex + i];
+                    if (!planetoid.active)
+                        continue;
+                    this.renderPlanetoid(planetoid, rc);
+                }
+                rc.restore();
+            }
+        }
+        else if (this.mode == EXOMODE) {
             let rc = this.xor.renderconfigs.use('default');
             if (rc) {
                 for (let i = 0; i <= PlayerMaxIndex; i++) {
