@@ -5,3 +5,18 @@ The Llama Paradox is a video game based on the theme "start from nothing." The g
 ## Player Control
 
 There are two main modes of operation: Design and Mine. Design Mode allows you to place the location of another star in the system. The restriction is that it must be placed no closer than one grid element away from another star and that one grid section must contain no more than a single star. Copy/Paste your own signature code to share your solar system with others.
+
+## Product Backlog
+
+* App
+* Game
+* CommoneGame
+* EndoSystemGame
+* ExoSystemGame
+* GravityObjects
+* Player controls ship which uses thrust to fly
+* Player can pick money up from planet
+* Player can drop money off at station
+* Player can leave solar system
+* Player can enter solar system
+* Player can place a star in solar system
