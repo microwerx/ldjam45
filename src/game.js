@@ -92,6 +92,22 @@ function createCheckRow(parent, id, checked) {
     parent.appendChild(row);
 }
 /**
+ * createTextRow adds a button to the control list
+ * @param {HTMLElement} parent The parent HTMLElement
+ * @param {string} id The name of the button's id
+ * @param {string} value The initial value of the string
+ */
+function createTextRow(parent, id, value) {
+    let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
+    let rContent = "<div class='column right'>";
+    rContent += "<input type='text' id='" + id + " value='" + value + "' />";
+    rContent += "</div>";
+    let row = createRow(lContent, rContent);
+    row.id = "row" + id;
+    row.className = "row";
+    parent.appendChild(row);
+}
+/**
  * createDivRow adds a row to the control list
  * @param {HTMLElement} parent The parent HTMLElement
  * @param {string} id The name of the row's id
@@ -241,6 +257,7 @@ class App {
                     setDivRowValue("bZSDF", "WASD");
                 }
             });
+            createTextRow(controls, "SolarCode", "Share with others");
             createCheckRow(controls, "zasdKeys", false);
             createRangeRow(controls, "SOffsetX", 0, -8, 8);
             createRangeRow(controls, "SOffsetY", 0, -8, 8);

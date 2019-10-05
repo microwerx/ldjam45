@@ -74,7 +74,7 @@ function createButtonRow(
     let rContent = "<div class='column right'>";
     rContent += "<button id='" + id + "'>" + caption + "</button>";
     rContent += "</div><div class='column left'>";
-    rContent += "<label id='" + id + "_value'>0</label>";    rContent += "</div>";
+    rContent += "<label id='" + id + "_value'>0</label>"; rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
     row.className = "row";
@@ -97,7 +97,24 @@ function createCheckRow(parent: HTMLElement, id: string, checked: boolean) {
     let c = checked ? " checked" : "";
     rContent += "<input type='checkbox' id='" + id + "' " + c + "/>";
     rContent += "</div><div class='column left'>";
-    rContent += "<label id='" + id + "_value'>0</label>";    rContent += "</div>";
+    rContent += "<label id='" + id + "_value'>0</label>"; rContent += "</div>";
+    let row = createRow(lContent, rContent);
+    row.id = "row" + id;
+    row.className = "row";
+    parent.appendChild(row);
+}
+
+/**
+ * createTextRow adds a button to the control list
+ * @param {HTMLElement} parent The parent HTMLElement
+ * @param {string} id The name of the button's id
+ * @param {string} value The initial value of the string
+ */
+function createTextRow(parent: HTMLElement, id: string, value: string) {
+    let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
+    let rContent = "<div class='column right'>";
+    rContent += "<input type='text' id='" + id + " value='" + value + "' />";
+    rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;
     row.className = "row";
