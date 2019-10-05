@@ -113,7 +113,9 @@ function createCheckRow(parent: HTMLElement, id: string, checked: boolean) {
 function createTextRow(parent: HTMLElement, id: string, value: string) {
     let lContent = "<div class='column left'><label for='" + id + "'>" + id + "<label></div>";
     let rContent = "<div class='column right'>";
-    rContent += "<input type='text' id='" + id + " value='" + value + "' />";
+    rContent += "<input type='text' style='width: 8em' id='" + id + " value='" + value + "' />";
+    rContent += "</div><div class='column left'>";
+    rContent += "<label id='" + id + "_value'>" + value + "</label>";
     rContent += "</div>";
     let row = createRow(lContent, rContent);
     row.id = "row" + id;

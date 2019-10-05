@@ -63,7 +63,7 @@ class App {
                     setDivRowValue("bZSDF", "WASD");
                 }
             });
-            createTextRow(controls, "SolarCode", "Share with others");
+            createTextRow(controls, "SolarCode", "");
             createCheckRow(controls, "zasdKeys", false);
             createRangeRow(controls, "SOffsetX", 0, -8, 8);
             createRangeRow(controls, "SOffsetY", 0, -8, 8);
