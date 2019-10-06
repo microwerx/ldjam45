@@ -214,9 +214,9 @@ class Game {
 
         if (this.mode == ENDOMODE) {
             player.thrust(this.app.p1x, this.app.p1y);
-            this.endogame.update();
         }
 
+        this.endogame.update();
 
         if (this.mode == EXOMODE) {
             this.exogame.update();
