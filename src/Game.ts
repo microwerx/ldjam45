@@ -21,7 +21,7 @@ class Game {
     common = new CommonGame(this.xor);
     exogame = new ExoSystemGame(this.xor, this.common);
     endogame = new EndoSystemGame(this.xor, this.common);
-    mode = ENDOMODE;
+    mode = EXOMODE;
 
     level = 5;
 
@@ -65,7 +65,7 @@ class Game {
         if (this.mode == ENDOMODE) this.common.states.push("ENDO", "", 0);
         if (this.mode == EXOMODE) this.common.states.push("EXO", "", 0);
 
-        this.level = 5;
+        this.level = this.app.levelRequested;
         this.common.resize(this.level, this.level);
         this.fadingTime = this.xor.t1;
         this.fadingIn = false;
@@ -87,6 +87,7 @@ class Game {
     }
 
     createLevel() {
+        /*
         let numStars = randbetweeni(1, this.common.numCols);
         for (let i = 0; i < numStars; i++) {
             let col = randbetweeni(0, this.level);
@@ -115,6 +116,11 @@ class Game {
             let row = randbetween(0, this.level);
             this.common.createCreationStar(col, row);
         }
+        */
+
+        let col = randbetween(0, this.level);
+        let row = randbetween(0, this.level);
+        this.common.createCreationStar(col, row);
 
         for (let i = 0; i < PlayerCount; i++) {
             this.common.gobjs[PlayerIndex + i].active = true;
@@ -160,7 +166,7 @@ class Game {
 
         if (this.mode == ENDOMODE) {
             let player = this.common.gobjs[PlayerIndex];
-            EndoCenter.reset(-player.x.x, -player.x.y, -50);
+            EndoCenter.reset(-player.x.x, -player.x.y, -75);
             let distance = EndoCenter.distance(this.cameraPosition);
             if (distance > 1) {
                 let dirTo = this.cameraPosition.dirTo(EndoCenter);
@@ -199,6 +205,13 @@ class Game {
 
         let player = this.common.gobjs[PlayerIndex];
 
+        if (this.xor.triggers.get("SPC").tick(this.xor.t1)) {
+            if (this.app.SPACEbutton) {
+                this.swapEndoExoMode();
+                return;
+            }
+        }
+
         if (this.mode == ENDOMODE) {
             player.thrust(this.app.p1x, this.app.p1y);
             this.endogame.update();
@@ -226,6 +239,19 @@ class Game {
             this.fadingIn = true;
             this.gameEnded = true;
             this.xor.sound.jukebox.play(MUSIC_STARBATTLE1);
+        }
+    }
+
+    swapEndoExoMode() {
+        let endo = (this.common.states.topName == "ENDO") ? 1 : 0;
+        endo = 1 - endo;
+        this.common.states.clear();
+        if (endo) {
+            this.common.states.push("ENDO", "", 0);
+            this.common.sfx(SOUND_ENDO);
+        } else {
+            this.common.states.push("EXO", "", 0);
+            this.common.sfx(SOUND_EXO);
         }
     }
 
@@ -302,10 +328,11 @@ class Game {
             0
         );
         wm.scale(2, 2, 2);
-        if (this.exogame.placeable)
-            rc.uniform3f("Kd", Vector3.make(Math.sin(this.xor.t1) * 0.5 + 1, 0, 0));
+        let s = Math.sin(this.xor.t1) * 0.25 + 0.75;
+        if (!this.exogame.placeable)
+            rc.uniform3f("Kd", Vector3.make(s, 0, 0));
         else
-            rc.uniform3f("Kd", Vector3.make(0, 1.0 + 0.5 * Math.sin(this.xor.t1), 0));
+            rc.uniform3f("Kd", Vector3.make(0, s, 0));
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('circle', rc);
     }
@@ -382,9 +409,13 @@ class Game {
 
         if (!this.gameEnded) {
             gfx.font = "32px linlibertine";
-            gfx.fillStyle = "#FFFFFF";
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(15));
             gfx.textAlign = "right";
             gfx.fillText("Creation Stars: " + this.common.creationStarsCollected, CANVASWIDTH, 32);
+            gfx.textAlign = "left";
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(14));
+            let goldval = (this.common.gold * 100) | 0;
+            gfx.fillText("Gold: " + goldval, 0, 32);
 
 
             let gold = this.common.gold / this.common.MaxGold;

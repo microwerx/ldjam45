@@ -8,7 +8,7 @@ class GravityObject {
     private thrust_ = Vector3.make(0, 0, 0);
     life = 1.0;
     angle = 0;
-    drag = 0.1;
+    drag = 0.0;
     type = 0;
 
     /**
@@ -53,9 +53,8 @@ class GravityObject {
      * updateForces calculates forces between interacting objects
      */
     updateForces() {
-        const drag = 0.05;//1.0 - 1.0 / this.radius;
         this.a.accum(this.thrust_, 1.0);
-        this.a.accum(this.v, -drag);
+        this.a.accum(this.v, -this.drag);
         const MaxAccel = 50;
         this.a = this.a.clamp(-MaxAccel, MaxAccel);
     }
@@ -167,6 +166,10 @@ class GravityObject {
      */
     thrust(x: number, y: number) {
         this.thrust_.reset(x, y, 0);
+    }
+
+    drag(x: number) {
+        this.drag = GTE.clamp(x, 0.0, 0.1);
     }
 
     /**

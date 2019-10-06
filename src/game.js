@@ -292,7 +292,7 @@ class GravityObject {
         this.thrust_ = Vector3.make(0, 0, 0);
         this.life = 1.0;
         this.angle = 0;
-        this.drag = 0.1;
+        this.drag = 0.0;
         this.type = 0;
     }
     get sink() { return this.gravitydir > 0; }
@@ -319,9 +319,8 @@ class GravityObject {
      * updateForces calculates forces between interacting objects
      */
     updateForces() {
-        const drag = 0.05; //1.0 - 1.0 / this.radius;
         this.a.accum(this.thrust_, 1.0);
-        this.a.accum(this.v, -drag);
+        this.a.accum(this.v, -this.drag);
         const MaxAccel = 50;
         this.a = this.a.clamp(-MaxAccel, MaxAccel);
     }
@@ -427,6 +426,9 @@ class GravityObject {
     thrust(x, y) {
         this.thrust_.reset(x, y, 0);
     }
+    drag(x) {
+        this.drag = GTE.clamp(x, 0.0, 0.1);
+    }
     /**
      * Returns the burn factor from this object to the next.
      * This only works from big objects to small objects.
@@ -438,7 +440,7 @@ class GravityObject {
     }
 }
 const PlayerCount = 1;
-const CreationStarCount = 4;
+const CreationStarCount = 20;
 const StarCount = 20;
 const PlanetoidCount = StarCount * 2;
 const PlayerIndex = 0;
@@ -504,7 +506,7 @@ class CommonGame {
         this.bbox = new GTE.BoundingBox();
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
-        this.MaxCreationStars = numCols >> 1;
+        this.MaxCreationStars = numCols * 2;
         this.MaxGold = this.MaxPlanetoids * 10;
         this.gobjs = [];
         for (let i = 0; i < PlayerCount; i++) {
@@ -676,6 +678,7 @@ class ExoSystemGame {
     placeStar() {
         if (this.common.creationStarsCollected <= 0) {
             this.common.sfx(SOUND_NOP);
+            return;
         }
         ;
         this.common.setStar(this.col, this.row);
@@ -685,6 +688,10 @@ class ExoSystemGame {
             let y = randbetween(-1, 1);
             this.common.createPlanetoid(this.col + x, this.row + y);
         }
+        let x = randbetween(-1, 1);
+        let y = randbetween(-1, 1);
+        this.common.createCreationStar(this.col + x, this.row + y);
+        this.common.creationStarsCollected--;
     }
 }
 /// <reference path="./CommonGame.ts" />
@@ -920,7 +927,7 @@ class Game {
         this.common = new CommonGame(this.xor);
         this.exogame = new ExoSystemGame(this.xor, this.common);
         this.endogame = new EndoSystemGame(this.xor, this.common);
-        this.mode = ENDOMODE;
+        this.mode = EXOMODE;
         this.level = 5;
         this.cameraPosition = Vector3.make();
         this.exoGridFade = 0;
@@ -950,7 +957,7 @@ class Game {
             this.common.states.push("ENDO", "", 0);
         if (this.mode == EXOMODE)
             this.common.states.push("EXO", "", 0);
-        this.level = 5;
+        this.level = this.app.levelRequested;
         this.common.resize(this.level, this.level);
         this.fadingTime = this.xor.t1;
         this.fadingIn = false;
@@ -967,6 +974,7 @@ class Game {
         this.xor.sound.jukebox.play(MUSIC_STARBATTLE2);
     }
     createLevel() {
+        /*
         let numStars = randbetweeni(1, this.common.numCols);
         for (let i = 0; i < numStars; i++) {
             let col = randbetweeni(0, this.level);
@@ -979,6 +987,7 @@ class Game {
             }
         }
         hflog.info(numStars.toFixed(0) + " stars created");
+
         let numPlanetoids = randbetweeni(numStars, numStars << 1);
         for (let i = 0; i < numPlanetoids; i++) {
             let col = randbetween(0, this.level);
@@ -986,6 +995,7 @@ class Game {
             this.common.createPlanetoid(col, row);
         }
         hflog.info(numPlanetoids.toFixed(0) + " planetoids created");
+
         let maxStars = this.common.MaxStars - numStars;
         let numCreationStars = randbetweeni(1, maxStars);
         for (let i = 0; i < numCreationStars; i++) {
@@ -993,6 +1003,10 @@ class Game {
             let row = randbetween(0, this.level);
             this.common.createCreationStar(col, row);
         }
+        */
+        let col = randbetween(0, this.level);
+        let row = randbetween(0, this.level);
+        this.common.createCreationStar(col, row);
         for (let i = 0; i < PlayerCount; i++) {
             this.common.gobjs[PlayerIndex + i].active = true;
             this.common.gobjs[PlayerIndex + i].life = 1;
@@ -1035,7 +1049,7 @@ class Game {
         let app = this.app;
         if (this.mode == ENDOMODE) {
             let player = this.common.gobjs[PlayerIndex];
-            EndoCenter.reset(-player.x.x, -player.x.y, -50);
+            EndoCenter.reset(-player.x.x, -player.x.y, -75);
             let distance = EndoCenter.distance(this.cameraPosition);
             if (distance > 1) {
                 let dirTo = this.cameraPosition.dirTo(EndoCenter);
@@ -1069,6 +1083,12 @@ class Game {
             }
         }
         let player = this.common.gobjs[PlayerIndex];
+        if (this.xor.triggers.get("SPC").tick(this.xor.t1)) {
+            if (this.app.SPACEbutton) {
+                this.swapEndoExoMode();
+                return;
+            }
+        }
         if (this.mode == ENDOMODE) {
             player.thrust(this.app.p1x, this.app.p1y);
             this.endogame.update();
@@ -1093,6 +1113,19 @@ class Game {
             this.fadingIn = true;
             this.gameEnded = true;
             this.xor.sound.jukebox.play(MUSIC_STARBATTLE1);
+        }
+    }
+    swapEndoExoMode() {
+        let endo = (this.common.states.topName == "ENDO") ? 1 : 0;
+        endo = 1 - endo;
+        this.common.states.clear();
+        if (endo) {
+            this.common.states.push("ENDO", "", 0);
+            this.common.sfx(SOUND_ENDO);
+        }
+        else {
+            this.common.states.push("EXO", "", 0);
+            this.common.sfx(SOUND_EXO);
         }
     }
     render() {
@@ -1159,10 +1192,11 @@ class Game {
         let offrow = (this.common.numRows / 2);
         let wm = Matrix4.makeTranslation((this.exogame.col - offcol) * SpaceBetweenStars, (this.exogame.row - offrow) * SpaceBetweenStars, 0);
         wm.scale(2, 2, 2);
-        if (this.exogame.placeable)
-            rc.uniform3f("Kd", Vector3.make(Math.sin(this.xor.t1) * 0.5 + 1, 0, 0));
+        let s = Math.sin(this.xor.t1) * 0.25 + 0.75;
+        if (!this.exogame.placeable)
+            rc.uniform3f("Kd", Vector3.make(s, 0, 0));
         else
-            rc.uniform3f("Kd", Vector3.make(0, 1.0 + 0.5 * Math.sin(this.xor.t1), 0));
+            rc.uniform3f("Kd", Vector3.make(0, s, 0));
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('circle', rc);
     }
@@ -1234,9 +1268,13 @@ class Game {
         let pal = this.xor.palette;
         if (!this.gameEnded) {
             gfx.font = "32px linlibertine";
-            gfx.fillStyle = "#FFFFFF";
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(15));
             gfx.textAlign = "right";
             gfx.fillText("Creation Stars: " + this.common.creationStarsCollected, CANVASWIDTH, 32);
+            gfx.textAlign = "left";
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(14));
+            let goldval = (this.common.gold * 100) | 0;
+            gfx.fillText("Gold: " + goldval, 0, 32);
             let gold = this.common.gold / this.common.MaxGold;
             gfx.fillStyle = pal.getHtmlColor(pal.calcColor(14, 0, 4, 0, 0, 0));
             gfx.fillRect(0, CANVASHEIGHT - 10, CANVASWIDTH / 2, 10);
@@ -1292,6 +1330,8 @@ class App {
         this.xor = new LibXOR("project");
         this.game = new Game(this, this.xor);
         this.theta = 0;
+        this.levelRequested = 7;
+        this.userDrag = 0;
         this.euroKeys = 0;
         this.xmoveKeys = [
             ["KeyA", "KeyD"],
@@ -1330,7 +1370,7 @@ class App {
         let self = this;
         let controls = document.getElementById('controls');
         if (controls) {
-            createButtonRow(controls, "bReset", "Reset", () => {
+            createButtonRow(controls, "bStartGame", "Start Game", () => {
                 self.reset();
             });
             createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => {
@@ -1343,21 +1383,13 @@ class App {
                 }
             });
             createButtonRow(controls, "ENDOEXO", "ENDO/EXO", () => {
-                let endo = (this.game.common.states.topName == "ENDO") ? 1 : 0;
-                endo = 1 - endo;
-                this.game.common.states.clear();
-                if (endo) {
-                    this.game.common.states.push("ENDO", "", 0);
-                    this.game.common.sfx(SOUND_ENDO);
-                }
-                else {
-                    this.game.common.states.push("EXO", "", 0);
-                    this.game.common.sfx(SOUND_EXO);
-                }
+                this.game.swapEndoExoMode();
             });
-            createLabelRow(controls, "TOP", "TOP");
-            createLabelRow(controls, "ALT", "ALT");
-            createTextRow(controls, "SolarCode", "");
+            // createLabelRow(controls, "TOP", "TOP");
+            // createLabelRow(controls, "ALT", "ALT");
+            // createTextRow(controls, "SolarCode", "");
+            createRangeRow(controls, "Level", 7, 3, 10);
+            createRangeRow(controls, "Drag", 1, 1, 10);
             // createRangeRow(controls, "SOffsetX", 0, -8, 8);
             // createRangeRow(controls, "SOffsetY", 0, -8, 8);
             // createRangeRow(controls, "SZoomX", 1.0, 0.0, 4.0, 0.1);
@@ -1372,7 +1404,7 @@ class App {
             });
         }
         this.xor.triggers.set("ESC", 60.0 / 120.0);
-        this.xor.triggers.set("SPC", 0.033);
+        this.xor.triggers.set("SPC", 0.15);
         this.xor.triggers.set("ENT", 0.033);
         this.xor.triggers.set("EXOLR", 0.2);
         this.xor.triggers.set("EXOUD", 0.2);
@@ -1419,8 +1451,8 @@ class App {
         this.xor.graphics.init();
         this.reset();
         this.xor.sound.init();
-        this.xor.sound.jukebox.add(0, "music/starbattle1.mp3", false);
-        this.xor.sound.jukebox.add(1, "music/starbattle2.mp3", false);
+        this.xor.sound.jukebox.add(0, "music/starbattlemusic1.mp3", false);
+        this.xor.sound.jukebox.add(1, "music/starbattlemusic2.mp3", false);
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/starbattle-dead.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/starbattle-pdead.wav");
         this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/starbattle-.wav");
@@ -1502,11 +1534,13 @@ class App {
      */
     updateControls() {
         let xor = this.xor;
-        xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
-        xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
-        setDivLabelValue("TOP", this.game.common.states.topName);
-        setDivLabelValue("ALT", this.game.common.states.topAlt);
-        setDivLabelValue("ALT", this.p1y.toString());
+        // xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
+        // xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
+        this.levelRequested = getRangeValue("Level");
+        this.userDrag = getRangeValue("Drag");
+        // setDivLabelValue("TOP", this.game.common.states.topName);
+        // setDivLabelValue("ALT", this.game.common.states.topAlt);
+        // setDivLabelValue("ALT", this.p1y.toString());
     }
     /**
      * render() draws the screen
@@ -1516,9 +1550,9 @@ class App {
         let gl = xor.graphics.gl;
         let mixColor = Math.floor(0.5 * (1.0 + Math.sin(xor.t1)) * 6 + 0.5);
         xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 6);
-        if (!this.pauseGame) {
-            xor.graphics.render();
-        }
+        // if (!this.pauseGame) {
+        //     xor.graphics.render();
+        // }
         let pmatrix = Matrix4.makePerspectiveY(45.0, CANVASWIDTH / CANVASHEIGHT, 1.0, 100.0);
         let cmatrix = Matrix4.makeOrbit(-90, 0, 5.0);
         // let rc = xor.renderconfigs.use('default');

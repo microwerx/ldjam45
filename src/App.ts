@@ -7,6 +7,8 @@ class App {
     game = new Game(this, this.xor);
 
     theta = 0;
+    levelRequested = 7;
+    userDrag = 0;
 
     euroKeys = 0;
     xmoveKeys = [
@@ -52,7 +54,7 @@ class App {
         let self = this;
         let controls = document.getElementById('controls');
         if (controls) {
-            createButtonRow(controls, "bReset", "Reset", () => {
+            createButtonRow(controls, "bStartGame", "Start Game", () => {
                 self.reset();
             });
             createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => {
@@ -64,20 +66,13 @@ class App {
                 }
             });
             createButtonRow(controls, "ENDOEXO", "ENDO/EXO", () => {
-                let endo = (this.game.common.states.topName == "ENDO") ? 1 : 0;
-                endo = 1 - endo;
-                this.game.common.states.clear();
-                if (endo) {
-                    this.game.common.states.push("ENDO", "", 0);
-                    this.game.common.sfx(SOUND_ENDO);
-                } else {
-                    this.game.common.states.push("EXO", "", 0);
-                    this.game.common.sfx(SOUND_EXO);
-                }
+                this.game.swapEndoExoMode();
             });
-            createLabelRow(controls, "TOP", "TOP");
-            createLabelRow(controls, "ALT", "ALT");
-            createTextRow(controls, "SolarCode", "");
+            // createLabelRow(controls, "TOP", "TOP");
+            // createLabelRow(controls, "ALT", "ALT");
+            // createTextRow(controls, "SolarCode", "");
+            createRangeRow(controls, "Level", 7, 3, 10);
+            createRangeRow(controls, "Drag", 1, 1, 10);
             // createRangeRow(controls, "SOffsetX", 0, -8, 8);
             // createRangeRow(controls, "SOffsetY", 0, -8, 8);
             // createRangeRow(controls, "SZoomX", 1.0, 0.0, 4.0, 0.1);
@@ -93,7 +88,7 @@ class App {
         }
 
         this.xor.triggers.set("ESC", 60.0 / 120.0);
-        this.xor.triggers.set("SPC", 0.033);
+        this.xor.triggers.set("SPC", 0.15);
         this.xor.triggers.set("ENT", 0.033);
         this.xor.triggers.set("EXOLR", 0.2);
         this.xor.triggers.set("EXOUD", 0.2);
@@ -148,8 +143,8 @@ class App {
         this.reset();
 
         this.xor.sound.init();
-        this.xor.sound.jukebox.add(0, "music/starbattle1.mp3", false);
-        this.xor.sound.jukebox.add(1, "music/starbattle2.mp3", false);
+        this.xor.sound.jukebox.add(0, "music/starbattlemusic1.mp3", false);
+        this.xor.sound.jukebox.add(1, "music/starbattlemusic2.mp3", false);
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/starbattle-dead.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/starbattle-pdead.wav");
         this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/starbattle-.wav");
@@ -245,12 +240,14 @@ class App {
      */
     updateControls() {
         let xor = this.xor;
-        xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
-        xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
+        // xor.graphics.setOffset(getRangeValue("SOffsetX"), getRangeValue("SOffsetY"));
+        // xor.graphics.setZoom(getRangeValue("SZoomX"), getRangeValue("SZoomY"));
 
-        setDivLabelValue("TOP", this.game.common.states.topName);
-        setDivLabelValue("ALT", this.game.common.states.topAlt);
-        setDivLabelValue("ALT", this.p1y.toString());
+        this.levelRequested = getRangeValue("Level");
+        this.userDrag = getRangeValue("Drag");
+        // setDivLabelValue("TOP", this.game.common.states.topName);
+        // setDivLabelValue("ALT", this.game.common.states.topAlt);
+        // setDivLabelValue("ALT", this.p1y.toString());
     }
 
     /**
@@ -262,9 +259,9 @@ class App {
         let mixColor = Math.floor(0.5 * (1.0 + Math.sin(xor.t1)) * 6 + 0.5);
         xor.graphics.clear(XOR.Color.BLUE, XOR.Color.BLACK, 6);
 
-        if (!this.pauseGame) {
-            xor.graphics.render();
-        }
+        // if (!this.pauseGame) {
+        //     xor.graphics.render();
+        // }
 
         let pmatrix = Matrix4.makePerspectiveY(45.0, CANVASWIDTH / CANVASHEIGHT, 1.0, 100.0);
         let cmatrix = Matrix4.makeOrbit(-90, 0, 5.0);

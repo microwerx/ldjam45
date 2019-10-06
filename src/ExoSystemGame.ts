@@ -33,6 +33,7 @@ class ExoSystemGame {
     placeStar() {
         if (this.common.creationStarsCollected <= 0) {
             this.common.sfx(SOUND_NOP);
+            return;
         };
         this.common.setStar(this.col, this.row);
         this.common.sfx(SOUND_CREATE_STAR);
@@ -41,5 +42,11 @@ class ExoSystemGame {
             let y = randbetween(-1, 1);
             this.common.createPlanetoid(this.col + x, this.row + y);
         }
+
+        let x = randbetween(-1, 1);
+        let y = randbetween(-1, 1);
+        this.common.createCreationStar(this.col + x, this.row + y);
+
+        this.common.creationStarsCollected--;
     }
 }

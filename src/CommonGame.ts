@@ -1,6 +1,6 @@
 
 const PlayerCount = 1;
-const CreationStarCount = 4;
+const CreationStarCount = 20;
 const StarCount = 20;
 const PlanetoidCount = StarCount * 2;
 
@@ -87,7 +87,7 @@ class CommonGame {
     ) {
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
-        this.MaxCreationStars = numCols >> 1;
+        this.MaxCreationStars = numCols * 2;
         this.MaxGold = this.MaxPlanetoids * 10;
         this.gobjs = [];
         for (let i = 0; i < PlayerCount; i++) {
