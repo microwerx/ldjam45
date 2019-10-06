@@ -14,7 +14,7 @@ const CANVASWIDTH = 512;
 const CANVASHEIGHT = 512;
 const GOBJ_PLAYER = 0;
 
-let EndoCenter = Vector3.make(0, 0, -10);
+let EndoCenter = Vector3.make(0, 0, -100);
 let ExoCenter = Vector3.make(0, 0, -100);
 
 class Game {
@@ -36,6 +36,9 @@ class Game {
     ovtex: WebGLTexture | null = null;
 
     gamePaused = false;
+    gameEnded = true;
+    fadingTime = 0;
+    fadingIn = true;
 
     constructor(
         public app: App,
@@ -64,6 +67,9 @@ class Game {
 
         this.level = 5;
         this.common.resize(this.level, this.level);
+        this.fadingTime = this.xor.t1;
+        this.fadingIn = false;
+        this.gameEnded = false;
 
         this.createLevel();
         this.createGrid();
@@ -76,18 +82,18 @@ class Game {
         this.bbox.add(Vector3.make(-p, -p, 0));
 
         ExoCenter.reset(0, 0, -2.5 * this.level * SpaceBetweenStars);
-
-        this.common.resetPositions();
     }
 
     createLevel() {
         let numStars = randbetweeni(this.common.numCols, this.common.numCols << 1);
-        for (let i = 0; i < this.common.numCols * 2; i++) {
+        for (let i = 0; i < numStars; i++) {
             let col = randbetweeni(0, this.level);
             let row = randbetweeni(0, this.level);
-            let result = this.common.setStar(col, row);
-            if (result) {
-                this.common.createStar(numStars, col, row);
+            let result = false;
+            let maxtries = 10;
+            while (!result && maxtries > 0) {
+                result = this.common.setStar(col, row);
+                maxtries--;
             }
         }
         hflog.info(numStars.toFixed(0) + " stars created");
@@ -105,6 +111,11 @@ class Game {
             let col = randbetween(0, this.level);
             let row = randbetween(0, this.level);
             this.common.createCreationStar(col, row);
+        }
+
+        for (let i = 0; i < PlayerCount; i++) {
+            this.common.gobjs[PlayerIndex + i].active = true;
+            this.common.gobjs[PlayerIndex + i].life = 1;
         }
     }
 
@@ -183,14 +194,22 @@ class Game {
             }
         }
 
+        let player = this.common.gobjs[PlayerIndex];
+
         if (this.mode == ENDOMODE) {
-            let player = this.common.gobjs[PlayerIndex];
             player.thrust(this.app.p1x, this.app.p1y);
             this.endogame.update();
         }
 
+
         if (this.mode == EXOMODE) {
             this.exogame.update();
+        }
+
+        if (!this.fadingIn && player.life < 0) {
+            this.fadingTime = this.xor.t1;
+            this.fadingIn = true;
+            this.gameEnded = true;
         }
     }
 
@@ -200,7 +219,7 @@ class Game {
 
         let rc = this.xor.renderconfigs.use('default');
         if (rc) {
-            let projMatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 10 + Math.abs(ExoCenter.z));
+            let projMatrix = Matrix4.makePerspectiveY(45.0, CANVASWIDTH / CANVASHEIGHT, 1.0, 10 + Math.abs(ExoCenter.z));
             let cameraMatrix = Matrix4.makeTranslation3(this.cameraPosition);
             rc.uniformMatrix4f('ProjectionMatrix', projMatrix);
             rc.uniformMatrix4f('CameraMatrix', cameraMatrix);
@@ -231,7 +250,7 @@ class Game {
         for (let i = 0; i < CreationStarCount; i++) {
             let star = this.common.gobjs[CreationStarIndex + i];
             if (!star.active) continue;
-            this.renderExtraStar(star, rc);
+            this.renderCreationStar(star, rc);
             if (player.canCalcInteraction(star)) {
                 this.xor.meshes.render('circle', rc);
             }
@@ -264,11 +283,11 @@ class Game {
         this.xor.meshes.render('cube', rc);
     }
 
-    renderExtraStar(gobj: GravityObject, rc: FxRenderConfig) {
+    renderCreationStar(gobj: GravityObject, rc: FxRenderConfig) {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
-        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(0.5, 1, 0.5));
-        if (gobj.vent) rc.uniform3f("Kd", Vector3.make(0, 0.5 * Math.sin(this.xor.t1), 0));
+        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(1.0, 1.0, 1.0));
+        if (gobj.vent) rc.uniform3f("Kd", Vector3.make(1.0 * Math.sin(this.xor.t1), 0));
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('geosphere', rc);
     }
@@ -299,11 +318,52 @@ class Game {
         gfx.fillStyle = '#FFFFFF';
         gfx.strokeStyle = "#FF0000";
         gfx.textAlign = "center";
-        gfx.strokeText("STAR BATTLE", CANVASWIDTH >> 1, CANVASHEIGHT >> 2);
+        let pt1 = this.xor.t1 - this.fadingTime;
+        let fade = 0;
+        if (this.xor.t1 < 5 || this.fadingIn) {
+            let a = GTE.clamp(pt1, 0, 5) / 5;
+            gfx.strokeStyle = this.xor.palette.getHtmlColor(Vector3.make(
+                a, 0, 0
+            ));
+            if (a > 0)
+                gfx.strokeText("STAR BATTLE", CANVASWIDTH >> 1, CANVASHEIGHT >> 2);
+            fade = a;
+        } else {
+            let a = GTE.clamp(5 - pt1, 0, 5) / 5;
+            gfx.strokeStyle = this.xor.palette.getHtmlColor(Vector3.make(
+                a, 0, 0
+            ));
+            if (a > 0)
+                gfx.strokeText("STAR BATTLE", CANVASWIDTH >> 1, CANVASHEIGHT >> 2);
+            fade = a;
+        }
+
         if (this.gamePaused) {
             gfx.font = "32px linlibertine";
             gfx.fillStyle = '#FFFFFF';
             gfx.fillText("Game Paused", CANVASWIDTH >> 1, CANVASHEIGHT >> 1);
+        }
+
+        let pal = this.xor.palette;
+
+        if (!this.gameEnded) {
+            gfx.font = "32px linlibertine";
+            gfx.fillStyle = "#FFFFFF";
+            gfx.textAlign = "right";
+            gfx.fillText("Creation Stars: " + this.common.creationStarsCollected, CANVASWIDTH, 32);
+
+
+            let gold = this.common.gold / this.common.MaxGold;
+            gfx.fillStyle = pal.getHtmlColor(pal.calcColor(14, 0, 4, 0, 0, 0));
+            gfx.fillRect(0, CANVASHEIGHT - 10, CANVASWIDTH / 2, 10);
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(14));
+            gfx.fillRect(0, CANVASHEIGHT - 10, gold * CANVASWIDTH / 2, 10);
+
+            let life = this.common.gobjs[PlayerIndex].life;
+            gfx.fillStyle = pal.getHtmlColor(pal.calcColor(4, 0, 4, 0, 0, 0));
+            gfx.fillRect(CANVASWIDTH / 2, CANVASHEIGHT - 10, CANVASWIDTH, 10);
+            gfx.fillStyle = pal.getHtmlColor(pal.getColor(4));
+            gfx.fillRect(CANVASWIDTH / 2, CANVASHEIGHT - 10, life * CANVASWIDTH / 2, 10);
         }
     }
 

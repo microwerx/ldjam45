@@ -90,6 +90,12 @@ class App {
         this.xor.triggers.set("ESC", 60.0 / 120.0);
         this.xor.triggers.set("SPC", 0.033);
         this.xor.triggers.set("ENT", 0.033);
+
+        this.xor.triggers.set("PLAYER_DEAD", 0.5);
+        this.xor.triggers.set("PLAYER_MINING", 0.5);
+        this.xor.triggers.set("PLANETOID_DEAD", 0.1);
+        this.xor.triggers.set("CREATIONSTAR_DEAD", 0.1);
+        this.xor.triggers.set("PLAYER_DYING", 0.5);
     }
 
     /**
@@ -119,7 +125,8 @@ class App {
      */
     init() {
         hflog.logElement = "log";
-        this.xor.graphics.setVideoMode(1.5 * 384, 384);
+        // this.xor.graphics.setVideoMode(1.5 * 384, 384);
+        this.xor.graphics.setVideoMode(512, 512);
         this.xor.input.init();
 
         let defaultrc = this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/basic.frag');
@@ -144,8 +151,11 @@ class App {
         this.xor.sound.jukebox.add(1, "music/maintheme.mp3", false);
         this.xor.sound.jukebox.add(2, "music/adventuretheme.mp3", false);
         this.xor.sound.jukebox.add(3, "music/arcadetheme.mp3", false);
-        this.xor.sound.sampler.loadSample(0, "sounds/BassDrum1.wav");
-        this.xor.sound.sampler.loadSample(1, "sounds/BassDrum2.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/BassDrum1.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/BassDrum2.wav");
+        this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/HhO.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_MINING, "sounds/HhC.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/Tamb.wav");
 
         this.game = new Game(this, this.xor);
         this.game.init();
@@ -208,26 +218,14 @@ class App {
         this.p2x = this.getAxis(this.yturnKeys);
         this.p2y = this.getAxis(this.xturnKeys);
 
-        if (xor.input.touches[0].pressed) {
-            let v = Vector3.makeUnit(
-                xor.input.touches[0].dx,
-                -xor.input.touches[0].dy,
-                0);
-            this.p1x = v.x;
-            this.p1y = v.y;
-        }
-
-        for (let i = 0; i < 4; i++) {
-            let spr = xor.graphics.sprites[2 + i];
-            let gp = xor.input.gamepads.get(i);
-            if (gp && gp.enabled) {
-                spr.enabled = true;
-                spr.position.x += gp.axe(0) * dt * 10;
-                spr.position.y += gp.axe(1) * dt * 10;
-            } else {
-                spr.enabled = false;
-            }
-        }
+        // if (xor.input.touches[0].pressed) {
+        //     let v = Vector3.makeUnit(
+        //         xor.input.touches[0].dx,
+        //         -xor.input.touches[0].dy,
+        //         0);
+        //     this.p1x = v.x;
+        //     this.p1y = v.y;
+        // }
 
         if (xor.input.mouseOver) {
             let w = xor.graphics.width;
@@ -251,7 +249,7 @@ class App {
 
         setDivLabelValue("TOP", this.game.common.states.topName);
         setDivLabelValue("ALT", this.game.common.states.topAlt);
-        setDivLabelValue("ALT", this.game.cameraPosition.z.toString());
+        setDivLabelValue("ALT", this.p1y.toString());
     }
 
     /**
@@ -267,7 +265,7 @@ class App {
             xor.graphics.render();
         }
 
-        let pmatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 100.0);
+        let pmatrix = Matrix4.makePerspectiveY(45.0, CANVASWIDTH / CANVASHEIGHT, 1.0, 100.0);
         let cmatrix = Matrix4.makeOrbit(-90, 0, 5.0);
         // let rc = xor.renderconfigs.use('default');
 

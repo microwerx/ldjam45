@@ -29,10 +29,25 @@ const NOTHING = 0;
 const STAR = 1;
 const PLANETOID = 2;
 
+const SOUND_PLAYER_DEAD = 0;
+const SOUND_PLANETOID_DEAD = 1;
+const SOUND_CREATIONSTAR_DEAD = 2;
+const SOUND_PLAYER_MINING = 3;
+const SOUND_PLAYER_DYING = 4;
+
+const SOUNDS: string[] = [
+    "PLAYER_DEAD",
+    "PLANETOID_DEAD",
+    "CREATIONSTAR_DEAD",
+    "PLAYER_MINING",
+    "PLAYER_DYING"
+];
+
 class CommonGame {
     gobjs: GravityObject[] = [];
 
     gold = 0;
+    MaxGold = 0;
 
     states = new StateMachine(this.xor);
 
@@ -46,8 +61,11 @@ class CommonGame {
     numPlanetoids = 0;
     numCreationStars = 0;
 
-    minPoint = Vector3.make();
-    maxPoint = Vector3.make();
+    creationStarsCollected = 0;
+
+    bbox = new GTE.BoundingBox();
+    // minPoint = Vector3.make();
+    // maxPoint = Vector3.make();
 
     constructor(
         public xor: LibXOR,
@@ -57,6 +75,7 @@ class CommonGame {
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
         this.MaxCreationStars = numCols >> 1;
+        this.MaxGold = this.MaxPlanetoids * 10;
         this.gobjs = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
@@ -82,16 +101,18 @@ class CommonGame {
         this.numCols = numCols;
         this.numRows = numRows;
         this.reset();
-        this.minPoint.reset(
+        let minPoint = Vector3.make(
             -(this.numCols + 1) * 0.5 * SpaceBetweenStars,
             -(this.numRows + 1) * 0.5 * SpaceBetweenStars,
             0
         );
-        this.maxPoint.reset(
+        let maxPoint = Vector3.make(
             (this.numCols + 1) * 0.5 * SpaceBetweenStars,
             (this.numRows + 1) * 0.5 * SpaceBetweenStars,
             0
         );
+        this.bbox.add(minPoint);
+        this.bbox.add(maxPoint);
     }
 
     reset() {
@@ -103,6 +124,16 @@ class CommonGame {
             }
             this.cells.push(row);
         }
+
+        for (let i = 0; i < MaxGObjects; i++) {
+            this.gobjs[i] = new GravityObject(1, 1, 1, this.xor, this.gobjs);
+        }
+
+        this.numStars = 0;
+        this.numCreationStars = 0;
+        this.numPlanetoids = 0;
+
+        this.creationStarsCollected = 0;
     }
 
     setStar(col: number, row: number): boolean {
@@ -119,8 +150,8 @@ class CommonGame {
             this.getStar(col - 1, row + 1) == STAR ||
             this.getStar(col + 0, row + 1) == STAR ||
             this.getStar(col + 1, row + 1) == STAR) return false;
+        if (!this.createStar(col, row)) return false;
         this.cells[row][col] = STAR;
-        this.numStars++;
         return true;
     }
 
@@ -134,50 +165,22 @@ class CommonGame {
 
     }
 
-    resetPositions() {
-        let gobjs = this.gobjs;
-        let cells = this.cells;
-        let starIndex = 0;
-        let planetoidIndex = 0;
+    createStar(i: number, j: number) {
+        if (this.numStars >= this.MaxStars) return false;
+        let index = this.numStars;
         const tx = -this.numCols * 0.5 * SpaceBetweenStars;
         const ty = -this.numRows * 0.5 * SpaceBetweenStars;
-        for (let j = 0; j < this.numRows; j++) {
-            for (let i = 0; i < this.numCols; i++) {
-                switch (cells[j][i]) {
-                    case NOTHING:
-                        break;
-                    case STAR:
-                        // this.createStar(starIndex, i, j);
-                        starIndex++;
-                        break;
-                    case PLANETOID:
-                        // this.createPlanetoid(planetoidIndex, i, j);
-                        planetoidIndex++;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        this.numStars = starIndex;
-        this.numPlanetoids = planetoidIndex;
-        hflog.info("planetary system configured");
-    }
-
-    createStar(starIndex: number, i: number, j: number) {
-        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
-        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
-        let star = this.gobjs[StarIndex + starIndex];
+        let star = this.gobjs[StarIndex + index];
         star.active = true;
         star.x.reset(
             tx + i * SpaceBetweenStars,
             ty + j * SpaceBetweenStars,
             0);
-        if (star.radius <= 1) {
-            let r = randbetween(MinStarRadius, MaxStarRadius);
-            star.radius = r;
-            star.mass = r * 1e12;
-        }
+        let r = randbetween(MinStarRadius, MaxStarRadius);
+        star.radius = r;
+        star.mass = r * 1e12;
+        this.numStars++;
+        return true;
     }
 
     createPlanetoid(i: number, j: number) {
@@ -191,11 +194,9 @@ class CommonGame {
             tx + i * SpaceBetweenStars,
             ty + j * SpaceBetweenStars,
             0);
-        if (planetoid.radius <= 1) {
-            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
-            planetoid.radius = r;
-            planetoid.mass = r * 1e12;
-        }
+        let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
+        planetoid.radius = r;
+        planetoid.mass = r * 1e9;
         this.numPlanetoids++;
         return true;
     }
@@ -215,5 +216,11 @@ class CommonGame {
         star.mass = 1e6;
         this.numCreationStars++;
         return true;
+    }
+
+    sfx(sound: number) {
+        if (this.xor.triggers.get(SOUNDS[sound]).tick(this.xor.t1)) {
+            this.xor.sound.sampler.playSample(sound);
+        }
     }
 }

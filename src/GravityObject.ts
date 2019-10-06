@@ -1,7 +1,7 @@
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 
 class GravityObject {
-    active = true;
+    active = false;
     x = Vector3.make(0, 0, 0);
     v = Vector3.make(0, 0, 0);
     a = Vector3.make(0, 0, 0);
@@ -56,6 +56,8 @@ class GravityObject {
         const drag = 0.05;//1.0 - 1.0 / this.radius;
         this.a.accum(this.thrust_, 1.0);
         this.a.accum(this.v, -drag);
+        const MaxAccel = 50;
+        this.a = this.a.clamp(-MaxAccel, MaxAccel);
     }
 
     /**
@@ -67,7 +69,8 @@ class GravityObject {
         this.v.accum(this.a, dt);
         let v_after = this.v.clone();
         this.v = (v_after.add(v_before)).scale(0.5);
-        this.v.clamp(-5.0, 5.0);
+        const MaxVelocity = 7;
+        this.v.clamp(-MaxVelocity, MaxVelocity);
         this.x.accum(this.v, dt);
     }
 
@@ -141,7 +144,7 @@ class GravityObject {
         if (r > maxdist) return;
         let x = gobj.dirTo(this);
         let massRatio = this.mass * gobj.mass;
-        let a = this.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 1.0), p);
+        let a = this.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 2.0), p);
         this.a.accum(x, a);
     }
 
@@ -173,7 +176,6 @@ class GravityObject {
      * @param gobj 
      */
     burn(gobj: GravityObject): number {
-        if (gobj.mass >= this.mass) return 0;
-        return GTE.clamp(this.mass / gobj.mass, 0, 100);
+        return GTE.clamp(this.distanceBetween(gobj) * -5, 0, 100);
     }
 }

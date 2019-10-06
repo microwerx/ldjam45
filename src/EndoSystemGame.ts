@@ -21,28 +21,6 @@ class EndoSystemGame {
 
         if (gobjs.length < MaxGObjects) return;
 
-        // update physics locations
-        // let starIndex = 0;
-        // let planetoidIndex = 0;
-        // for (let j = 0; j < this.common.numRows; j++) {
-        //     for (let i = 0; i < this.common.numCols; i++) {
-        //         switch (cells[j][i]) {
-        //             case NOTHING:
-        //                 break;
-        //             case STAR:
-        //                 gobjs[StarIndex + starIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-        //                 starIndex++;
-        //                 break;
-        //             case PLANETOID:
-        //                 gobjs[PlanetoidCount + planetoidIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-        //                 planetoidIndex++;
-        //                 break;
-        //             default:
-        //                 break;
-        //         }
-        //     }
-        // }
-
         // update star physics
         for (let i = 0; i < StarCount; i++) {
             let star = gobjs[StarIndex + i];
@@ -68,7 +46,10 @@ class EndoSystemGame {
                 continue;
             }
 
-            planetoid.active = true;
+            if (planetoid.life < 0) planetoid.active = false;
+            if (!planetoid.active) continue;
+
+            // planetoid.active = true;
             planetoid.resetForces();
 
             // allow planetoids to interact with stars
@@ -84,6 +65,13 @@ class EndoSystemGame {
                 planetoid.calcInteractionForce(otherPlanetoid, 10.0);
             }
 
+            // allow planetoids to interact with creation stars
+            for (let j = 0; j < this.common.numCreationStars; j++) {
+                if (j == i) continue;
+                let star = gobjs[CreationStarIndex + j];
+                planetoid.calcInteractionForce(star, 10.0);
+            }
+
             planetoid.update(this.xor.dt);
         }
 
@@ -91,13 +79,11 @@ class EndoSystemGame {
             let creationStar = gobjs[CreationStarIndex + i];
             if (i >= this.common.numCreationStars) {
                 creationStar.active = false;
-                return;
+                continue;
             }
 
             // TODO: CHANGE when creation stars can be obtained
             // if (!star.active) return;
-
-            creationStar.active = true;
             creationStar.resetForces();
 
             // allow creation star to interact with planetoids
@@ -117,25 +103,50 @@ class EndoSystemGame {
         // update player physics
         for (let i = 0; i < PlayerCount; i++) {
             let player = gobjs[PlayerIndex + i];
-            player.active = true;
+            if (!player.active) continue;
+
+            // player.active = true;
             player.resetForces();
 
             // TODO: allow player to interact with creation stars
             for (let j = 0; j < this.common.numCreationStars; j++) {
                 let star = gobjs[CreationStarIndex + j];
+                if (!star.active) continue;
                 player.calcInteractionForce(star);
+
+                if (player.distanceBetween(star) < 0) {
+                    star.active = false;
+                    this.common.sfx(SOUND_CREATIONSTAR_DEAD);
+                    this.common.creationStarsCollected++;
+                }
             }
 
             // allow player to interact with planetoids
             for (let j = 0; j < this.common.numPlanetoids; j++) {
                 let planetoid = gobjs[PlanetoidIndex + j];
                 player.calcInteractionForce(planetoid);
+
+                if (player.distanceBetween(planetoid) < 0) {
+                    this.common.sfx(SOUND_PLAYER_MINING);
+                    planetoid.life -= 0.1 * this.xor.dt;
+                    this.common.gold += 0.1 * this.xor.dt;
+                }
             }
 
             // allow player to interact with stars
             for (let j = 0; j < this.common.numStars; j++) {
                 let star = gobjs[StarIndex + j];
                 player.calcInteractionForce(star);
+
+                if (player.distanceBetween(star) < 0) {
+                    player.life -= player.burn(star) / 100.0 * this.xor.dt;
+                    if (player.life < 0) {
+                        this.common.sfx(SOUND_PLAYER_DEAD);
+                        player.active = false;
+                    } else {
+                        this.common.sfx(SOUND_PLAYER_DYING);
+                    }
+                }
             }
 
             player.update(this.xor.dt);
