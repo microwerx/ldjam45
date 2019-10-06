@@ -85,7 +85,7 @@ class Game {
     }
 
     createLevel() {
-        let numStars = randbetweeni(this.common.numCols, this.common.numCols << 1);
+        let numStars = randbetweeni(1, this.common.numCols);
         for (let i = 0; i < numStars; i++) {
             let col = randbetweeni(0, this.level);
             let row = randbetweeni(0, this.level);
@@ -106,7 +106,8 @@ class Game {
         }
         hflog.info(numPlanetoids.toFixed(0) + " planetoids created");
 
-        let numCreationStars = randbetweeni(1, this.common.MaxCreationStars);
+        let maxStars = this.common.MaxStars - numStars;
+        let numCreationStars = randbetweeni(1, maxStars);
         for (let i = 0; i < numCreationStars; i++) {
             let col = randbetween(0, this.level);
             let row = randbetween(0, this.level);
@@ -204,6 +205,18 @@ class Game {
 
         if (this.mode == EXOMODE) {
             this.exogame.update();
+            let b1 = this.xor.triggers.get("EXOLR").tick(this.xor.t1);
+            let b2 = this.xor.triggers.get("EXOUD").tick(this.xor.t1);
+            let b3 = this.app.ENTERbutton;
+            let dx = b1 ? this.app.p1x : 0;
+            let dy = b2 ? this.app.p1y : 0;
+            if (b1 || b2 || b3) {
+                this.common.sfx(SOUND_EXO_CLICK);
+            }
+            this.exogame.move(dx, dy);
+            if (b3 && this.exogame.placeable) {
+                this.exogame.placeStar();
+            }
         }
 
         if (!this.fadingIn && player.life < 0) {
@@ -233,6 +246,7 @@ class Game {
                 this.renderSystem(rc);
             } else if (this.mode == EXOMODE) {
                 this.renderSystem(rc);
+                this.renderExo(rc);
             }
             rc.restore();
         }
@@ -274,6 +288,23 @@ class Game {
                 this.xor.meshes.render('circle', rc);
             }
         }
+    }
+
+    renderExo(rc: FxRenderConfig) {
+        let offcol = (this.common.numCols / 2);
+        let offrow = (this.common.numRows / 2);
+        let wm = Matrix4.makeTranslation(
+            (this.exogame.col - offcol) * SpaceBetweenStars,
+            (this.exogame.row - offrow) * SpaceBetweenStars,
+            0
+        );
+        wm.scale(2, 2, 2);
+        if (this.exogame.placeable)
+            rc.uniform3f("Kd", Vector3.make(Math.sin(this.xor.t1) * 0.5 + 1, 0, 0));
+        else
+            rc.uniform3f("Kd", Vector3.make(0, 1.0 + 0.5 * Math.sin(this.xor.t1), 0));
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('circle', rc);
     }
 
     renderPlayer(gobj: GravityObject, rc: FxRenderConfig) {

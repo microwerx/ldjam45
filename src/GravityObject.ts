@@ -71,7 +71,7 @@ class GravityObject {
         this.v = (v_after.add(v_before)).scale(0.5);
         const MaxVelocity = 7;
         this.v.clamp(-MaxVelocity, MaxVelocity);
-        this.x.accum(this.v, dt);
+        this.x.accum(this.v.scale(0.5), dt);
     }
 
     /**

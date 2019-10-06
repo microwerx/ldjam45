@@ -34,13 +34,19 @@ const SOUND_PLANETOID_DEAD = 1;
 const SOUND_CREATIONSTAR_DEAD = 2;
 const SOUND_PLAYER_MINING = 3;
 const SOUND_PLAYER_DYING = 4;
+const SOUND_EXO_CLICK = 5;
+const SOUND_CREATE_STAR = 6;
+const SOUND_NOP = 7;
 
 const SOUNDS: string[] = [
     "PLAYER_DEAD",
     "PLANETOID_DEAD",
     "CREATIONSTAR_DEAD",
     "PLAYER_MINING",
-    "PLAYER_DYING"
+    "PLAYER_DYING",
+    "EXO_CLICK",
+    "SOUND_CREATE_STAR",
+    "SOUND_NOP"
 ];
 
 class CommonGame {
@@ -136,11 +142,27 @@ class CommonGame {
         this.creationStarsCollected = 0;
     }
 
+    placeable(col: number, row: number): boolean {
+        if (col < 0 || col >= this.numCols) return false;
+        if (row < 0 || row >= this.numRows) return false;
+        if (this.getStar(col - 1, row) == STAR ||
+            this.getStar(col + 0, row) == STAR ||
+            this.getStar(col + 1, row) == STAR ||
+            this.getStar(col - 1, row - 1) == STAR ||
+            this.getStar(col + 0, row - 1) == STAR ||
+            this.getStar(col + 1, row - 1) == STAR ||
+            this.getStar(col - 1, row + 1) == STAR ||
+            this.getStar(col + 0, row + 1) == STAR ||
+            this.getStar(col + 1, row + 1) == STAR) return false;
+        return true;
+    }
+
     setStar(col: number, row: number): boolean {
         if (col < 0 || col >= this.numCols) return false;
         if (row < 0 || row >= this.numRows) return false;
         if (this.numStars >= this.MaxStars) return false;
 
+        if (!this.placeable(col, row)) return false;
         if (this.getStar(col - 1, row) == STAR ||
             this.getStar(col + 0, row) == STAR ||
             this.getStar(col + 1, row) == STAR ||

@@ -90,12 +90,16 @@ class App {
         this.xor.triggers.set("ESC", 60.0 / 120.0);
         this.xor.triggers.set("SPC", 0.033);
         this.xor.triggers.set("ENT", 0.033);
+        this.xor.triggers.set("EXOLR", 0.2);
+        this.xor.triggers.set("EXOUD", 0.2);
 
         this.xor.triggers.set("PLAYER_DEAD", 0.5);
         this.xor.triggers.set("PLAYER_MINING", 0.5);
         this.xor.triggers.set("PLANETOID_DEAD", 0.1);
         this.xor.triggers.set("CREATIONSTAR_DEAD", 0.1);
         this.xor.triggers.set("PLAYER_DYING", 0.5);
+        this.xor.triggers.set("EXOCLICK", 0.1);
+        this.xor.triggers.set("CREATE_STAR", 0.5);
     }
 
     /**
@@ -156,6 +160,8 @@ class App {
         this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/HhO.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_MINING, "sounds/HhC.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/Tamb.wav");
+        this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "Snare1.wav");
+        this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/Ride.wav");
 
         this.game = new Game(this, this.xor);
         this.game.init();
