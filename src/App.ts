@@ -49,7 +49,7 @@ class App {
     pauseGame = false;
 
     constructor() {
-        setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
+        // setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
 
         let self = this;
         let controls = document.getElementById('controls');

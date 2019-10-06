@@ -1327,6 +1327,7 @@ class Game {
 /// <reference path="./Game.ts" />
 class App {
     constructor() {
+        // setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
         this.xor = new LibXOR("project");
         this.game = new Game(this, this.xor);
         this.theta = 0;
@@ -1366,7 +1367,6 @@ class App {
         this.SPACEbutton = 0;
         this.TABbutton = 0;
         this.pauseGame = false;
-        setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
         let self = this;
         let controls = document.getElementById('controls');
         if (controls) {
