@@ -1,14 +1,15 @@
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 
 class GravityObject {
+    active = true;
     x = Vector3.make(0, 0, 0);
     v = Vector3.make(0, 0, 0);
     a = Vector3.make(0, 0, 0);
     private thrust_ = Vector3.make(0, 0, 0);
     life = 1.0;
-    active = true;
     angle = 0;
     drag = 0.1;
+    type = 0;
 
     /**
      * constructor()

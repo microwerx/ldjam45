@@ -1,6 +1,6 @@
 
 const PlayerCount = 1;
-const ExtraStarCount = 2;
+const ExtraStarCount = 4;
 const MissileCount = PlayerCount * 10;
 const StarCount = 20;
 const PlanetoidCount = StarCount * 2;
@@ -44,6 +44,7 @@ class CommonGame {
     numPlanetoids = 0;
     minPoint = Vector3.make();
     maxPoint = Vector3.make();
+    numCreationStars = 0;
 
     constructor(
         public xor: LibXOR,
@@ -141,30 +142,11 @@ class CommonGame {
                     case NOTHING:
                         break;
                     case STAR:
-                        gobjs[StarIndex + starIndex].x.reset(
-                            tx + i * SpaceBetweenStars,
-                            ty + j * SpaceBetweenStars,
-                            0);
-                        if (gobjs[StarIndex + starIndex].radius <= 1) {
-                            let r = randbetween(MinStarRadius, MaxStarRadius);
-                            let m = r * 1e12;
-                            gobjs[StarIndex + starIndex].radius = r;
-                            gobjs[StarIndex + starIndex].mass = m;
-                        }
+                        // this.createStar(starIndex, i, j);
                         starIndex++;
                         break;
                     case PLANETOID:
-                        let planetoid = gobjs[PlanetoidCount + planetoidIndex];
-                        planetoid.x.reset(
-                            tx + i * SpaceBetweenStars,
-                            ty + j * SpaceBetweenStars,
-                            0);
-                        if (planetoid.radius <= 1) {
-                            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
-                            let m = r * 1e12;
-                            planetoid.radius = r;
-                            planetoid.mass = m;
-                        }
+                        // this.createPlanetoid(planetoidIndex, i, j);
                         planetoidIndex++;
                         break;
                     default:
@@ -175,5 +157,49 @@ class CommonGame {
         this.numStars = starIndex;
         this.numPlanetoids = planetoidIndex;
         hflog.info("planetary system configured");
+    }
+
+    createStar(starIndex: number, i: number, j: number) {
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        let star = this.gobjs[StarIndex + starIndex];
+        star.active = true;
+        star.x.reset(
+            tx + i * SpaceBetweenStars,
+            ty + j * SpaceBetweenStars,
+            0);
+        if (star.radius <= 1) {
+            let r = randbetween(MinStarRadius, MaxStarRadius);
+            star.radius = r;
+            star.mass = r * 1e12;
+        }
+    }
+
+    createPlanetoid(planetoidIndex: number, i: number, j: number) {
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        let planetoid = this.gobjs[PlanetoidCount + planetoidIndex];
+        planetoid.active = true;
+        planetoid.x.reset(
+            tx + i * SpaceBetweenStars,
+            ty + j * SpaceBetweenStars,
+            0);
+        if (planetoid.radius <= 1) {
+            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
+            planetoid.radius = r;
+            planetoid.mass = r * 1e12;
+        }
+    }
+
+    createCreationStar(i: number) {
+        if (i < 0 || i >= PlayerMaxIndex) return;
+        let star = this.gobjs[PlayerIndex + i];
+        star.x.reset(
+            randbetween(this.minPoint.x, this.maxPoint.x),
+            randbetween(this.minPoint.y, this.maxPoint.y),
+            0);
+        star.active = true;
+        star.radius = 2.0;
+        star.mass = 1e6;
     }
 }

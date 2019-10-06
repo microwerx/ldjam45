@@ -87,6 +87,7 @@ class Game {
             let row = randbetweeni(0, this.level - 1);
             let result = this.common.setStar(col, row, STAR);
             if (result) {
+                this.common.createStar(numStars, col, row);
                 numStars++;
                 hflog.info("star (" + col.toString() + ", " + row.toString() + ")");
             }
@@ -99,6 +100,7 @@ class Game {
             let row = randbetweeni(0, this.level - 1);
             let result = this.common.setStar(col, row, PLANETOID);
             if (result) {
+                this.common.createPlanetoid(numPlanetoids, col, row);
                 numPlanetoids++;
                 hflog.info("planetoid (" + col.toString() + ", " + row.toString() + ")");
             }
@@ -184,7 +186,9 @@ class Game {
         if (this.mode == ENDOMODE) {
             let player = this.common.gobjs[GOBJ_PLAYER];
             player.thrust(this.app.p1x, this.app.p1y);
-            player.x.accum(Vector3.make(this.app.p1x, this.app.p1y, 0), this.xor.dt);
+            player.x.accum(
+                Vector3.make(this.app.p1x, this.app.p1y, 0),
+                this.xor.dt);
             this.endogame.update();
         }
 
@@ -224,20 +228,21 @@ class Game {
 
     renderSystem(rc: FxRenderConfig) {
         rc.uniform3f("Kd", Vector3.make(1, 0, 1));
-        for (let i = 0; i <= PlayerMaxIndex; i++) {
-            let player = this.common.gobjs[PlayerIndex + i];
-            if (!player.active) continue;
-            this.renderPlayer(player, rc);
+        let player = this.common.gobjs[PlayerIndex];
+        this.renderPlayer(player, rc);
+
+        for (let i = 0; i <= ExtraStarCount; i++) {
+            let star = this.common.gobjs[ExtraStarIndex + i];
+            if (!star.active) continue;
+            this.renderExtraStar(star, rc);
+            if (player.canCalcInteraction(star)) {
+                this.xor.meshes.render('circle', rc);
+            }
         }
 
-        let player = this.common.gobjs[PlayerIndex];
-
-        rc.uniform3f("Kd", Vector3.make(1, 1, 0));
-        for (let i = 0; i <= StarMaxIndex; i++) {
+        for (let i = 0; i <= StarCount; i++) {
             let star = this.common.gobjs[StarIndex + i];
             if (!star.active) continue;
-            if (star.sink) rc.uniform3f("Kd", Vector3.make(1, 1, 0));
-            if (star.vent) rc.uniform3f("Kd", Vector3.make(0, 0, 1));
             this.renderStar(star, rc);
             if (player.canCalcInteraction(star)) {
                 this.xor.meshes.render('circle', rc);
@@ -245,11 +250,9 @@ class Game {
         }
 
         rc.uniform3f("Kd", Vector3.make(0.4, 0.2, 0));
-        for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+        for (let i = 0; i <= PlanetoidCount; i++) {
             let planetoid = this.common.gobjs[PlanetoidIndex + i];
             if (!planetoid.active) continue;
-            if (planetoid.sink) rc.uniform3f("Kd", Vector3.make(0.0, 1.0, 1.0));
-            if (planetoid.vent) rc.uniform3f("Kd", Vector3.make(1.0, 1.0, 0.0));
             this.renderPlanetoid(planetoid, rc);
             if (player.canCalcInteraction(planetoid)) {
                 this.xor.meshes.render('circle', rc);
@@ -264,9 +267,20 @@ class Game {
         this.xor.meshes.render('cube', rc);
     }
 
+    renderExtraStar(gobj: GravityObject, rc: FxRenderConfig) {
+        let wm = Matrix4.makeTranslation3(gobj.x);
+        wm.scale(gobj.radius, gobj.radius, gobj.radius);
+        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(0.5, 1, 0.5));
+        if (gobj.vent) rc.uniform3f("Kd", Vector3.make(0, 0.5 * Math.sin(this.xor.t1), 0));
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('geosphere', rc);
+    }
+
     renderStar(gobj: GravityObject, rc: FxRenderConfig) {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
+        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(1, 1, 0));
+        if (gobj.vent) rc.uniform3f("Kd", Vector3.make(0, 0, 1));
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('geosphere', rc);
     }
@@ -275,6 +289,8 @@ class Game {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
+        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(0, 1, 1));
+        if (gobj.vent) rc.uniform3f("Kd", Vector3.make(1, 0, 0));
         this.xor.meshes.render('geosphere', rc);
     }
 

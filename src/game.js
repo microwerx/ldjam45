@@ -285,14 +285,15 @@ class GravityObject {
         this.radius = radius;
         this.xor = xor;
         this.activeObjects = activeObjects;
+        this.active = true;
         this.x = Vector3.make(0, 0, 0);
         this.v = Vector3.make(0, 0, 0);
         this.a = Vector3.make(0, 0, 0);
         this.thrust_ = Vector3.make(0, 0, 0);
         this.life = 1.0;
-        this.active = true;
         this.angle = 0;
         this.drag = 0.1;
+        this.type = 0;
     }
     get sink() { return this.gravitydir > 0; }
     get vent() { return this.gravitydir < 0; }
@@ -436,7 +437,7 @@ class GravityObject {
     }
 }
 const PlayerCount = 1;
-const ExtraStarCount = 2;
+const ExtraStarCount = 4;
 const MissileCount = PlayerCount * 10;
 const StarCount = 20;
 const PlanetoidCount = StarCount * 2;
@@ -472,6 +473,7 @@ class CommonGame {
         this.numPlanetoids = 0;
         this.minPoint = Vector3.make();
         this.maxPoint = Vector3.make();
+        this.numCreationStars = 0;
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
         this.gobjs = [];
@@ -553,24 +555,11 @@ class CommonGame {
                     case NOTHING:
                         break;
                     case STAR:
-                        gobjs[StarIndex + starIndex].x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
-                        if (gobjs[StarIndex + starIndex].radius <= 1) {
-                            let r = randbetween(MinStarRadius, MaxStarRadius);
-                            let m = r * 1e12;
-                            gobjs[StarIndex + starIndex].radius = r;
-                            gobjs[StarIndex + starIndex].mass = m;
-                        }
+                        // this.createStar(starIndex, i, j);
                         starIndex++;
                         break;
                     case PLANETOID:
-                        let planetoid = gobjs[PlanetoidCount + planetoidIndex];
-                        planetoid.x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
-                        if (planetoid.radius <= 1) {
-                            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
-                            let m = r * 1e12;
-                            planetoid.radius = r;
-                            planetoid.mass = m;
-                        }
+                        // this.createPlanetoid(planetoidIndex, i, j);
                         planetoidIndex++;
                         break;
                     default:
@@ -581,6 +570,39 @@ class CommonGame {
         this.numStars = starIndex;
         this.numPlanetoids = planetoidIndex;
         hflog.info("planetary system configured");
+    }
+    createStar(starIndex, i, j) {
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        let star = this.gobjs[StarIndex + starIndex];
+        star.active = true;
+        star.x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
+        if (star.radius <= 1) {
+            let r = randbetween(MinStarRadius, MaxStarRadius);
+            star.radius = r;
+            star.mass = r * 1e12;
+        }
+    }
+    createPlanetoid(planetoidIndex, i, j) {
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        let planetoid = this.gobjs[PlanetoidCount + planetoidIndex];
+        planetoid.active = true;
+        planetoid.x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
+        if (planetoid.radius <= 1) {
+            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
+            planetoid.radius = r;
+            planetoid.mass = r * 1e12;
+        }
+    }
+    createCreationStar(i) {
+        if (i < 0 || i >= PlayerMaxIndex)
+            return;
+        let star = this.gobjs[PlayerIndex + i];
+        star.x.reset(randbetween(this.minPoint.x, this.maxPoint.x), randbetween(this.minPoint.y, this.maxPoint.y), 0);
+        star.active = true;
+        star.radius = 2.0;
+        star.mass = 1e6;
     }
 }
 /// <reference path="./CommonGame.ts" />
@@ -614,31 +636,31 @@ class EndoSystemGame {
         if (gobjs.length < MaxGObjects)
             return;
         // update physics locations
-        let starIndex = 0;
-        let planetoidIndex = 0;
-        for (let j = 0; j < this.common.numRows; j++) {
-            for (let i = 0; i < this.common.numCols; i++) {
-                switch (cells[j][i]) {
-                    case NOTHING:
-                        break;
-                    case STAR:
-                        gobjs[StarIndex + starIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-                        starIndex++;
-                        break;
-                    case PLANETOID:
-                        gobjs[PlanetoidCount + planetoidIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-                        planetoidIndex++;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+        // let starIndex = 0;
+        // let planetoidIndex = 0;
+        // for (let j = 0; j < this.common.numRows; j++) {
+        //     for (let i = 0; i < this.common.numCols; i++) {
+        //         switch (cells[j][i]) {
+        //             case NOTHING:
+        //                 break;
+        //             case STAR:
+        //                 gobjs[StarIndex + starIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
+        //                 starIndex++;
+        //                 break;
+        //             case PLANETOID:
+        //                 gobjs[PlanetoidCount + planetoidIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
+        //                 planetoidIndex++;
+        //                 break;
+        //             default:
+        //                 break;
+        //         }
+        //     }
+        // }
         // update star physics
         for (let i = 0; i < this.common.MaxStars; i++) {
             let star = gobjs[StarIndex + i];
             // disable non-existent stars
-            if (i >= starIndex) {
+            if (i >= this.common.numStars) {
                 star.active = false;
                 continue;
             }
@@ -675,7 +697,11 @@ class EndoSystemGame {
             let player = gobjs[PlayerIndex + i];
             player.active = true;
             player.resetForces();
-            // TODO: allow player to interact with missiles and other players
+            // TODO: allow player to interact with creation stars
+            for (let j = 0; j < this.common.numCreationStars; j++) {
+                let star = gobjs[ExtraStarIndex + j];
+                player.calcInteractionForce(star);
+            }
             // allow player to interact with planetoids
             for (let j = 0; j < this.common.numPlanetoids; j++) {
                 let planetoid = gobjs[PlanetoidIndex + j];
@@ -838,6 +864,7 @@ class Game {
             let row = randbetweeni(0, this.level - 1);
             let result = this.common.setStar(col, row, STAR);
             if (result) {
+                this.common.createStar(numStars, col, row);
                 numStars++;
                 hflog.info("star (" + col.toString() + ", " + row.toString() + ")");
             }
@@ -849,6 +876,7 @@ class Game {
             let row = randbetweeni(0, this.level - 1);
             let result = this.common.setStar(col, row, PLANETOID);
             if (result) {
+                this.common.createPlanetoid(numPlanetoids, col, row);
                 numPlanetoids++;
                 hflog.info("planetoid (" + col.toString() + ", " + row.toString() + ")");
             }
@@ -962,36 +990,31 @@ class Game {
     }
     renderSystem(rc) {
         rc.uniform3f("Kd", Vector3.make(1, 0, 1));
-        for (let i = 0; i <= PlayerMaxIndex; i++) {
-            let player = this.common.gobjs[PlayerIndex + i];
-            if (!player.active)
-                continue;
-            this.renderPlayer(player, rc);
-        }
         let player = this.common.gobjs[PlayerIndex];
-        rc.uniform3f("Kd", Vector3.make(1, 1, 0));
-        for (let i = 0; i <= StarMaxIndex; i++) {
+        this.renderPlayer(player, rc);
+        for (let i = 0; i <= ExtraStarCount; i++) {
+            let star = this.common.gobjs[ExtraStarIndex + i];
+            if (!star.active)
+                continue;
+            this.renderExtraStar(star, rc);
+            if (player.canCalcInteraction(star)) {
+                this.xor.meshes.render('circle', rc);
+            }
+        }
+        for (let i = 0; i <= StarCount; i++) {
             let star = this.common.gobjs[StarIndex + i];
             if (!star.active)
                 continue;
-            if (star.sink)
-                rc.uniform3f("Kd", Vector3.make(1, 1, 0));
-            if (star.vent)
-                rc.uniform3f("Kd", Vector3.make(0, 0, 1));
             this.renderStar(star, rc);
             if (player.canCalcInteraction(star)) {
                 this.xor.meshes.render('circle', rc);
             }
         }
         rc.uniform3f("Kd", Vector3.make(0.4, 0.2, 0));
-        for (let i = 0; i <= PlanetoidMaxIndex; i++) {
+        for (let i = 0; i <= PlanetoidCount; i++) {
             let planetoid = this.common.gobjs[PlanetoidIndex + i];
             if (!planetoid.active)
                 continue;
-            if (planetoid.sink)
-                rc.uniform3f("Kd", Vector3.make(0.0, 1.0, 1.0));
-            if (planetoid.vent)
-                rc.uniform3f("Kd", Vector3.make(1.0, 1.0, 0.0));
             this.renderPlanetoid(planetoid, rc);
             if (player.canCalcInteraction(planetoid)) {
                 this.xor.meshes.render('circle', rc);
@@ -1004,9 +1027,23 @@ class Game {
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('cube', rc);
     }
+    renderExtraStar(gobj, rc) {
+        let wm = Matrix4.makeTranslation3(gobj.x);
+        wm.scale(gobj.radius, gobj.radius, gobj.radius);
+        if (gobj.sink)
+            rc.uniform3f("Kd", Vector3.make(0.5, 1, 0.5));
+        if (gobj.vent)
+            rc.uniform3f("Kd", Vector3.make(0, 0.5 * Math.sin(this.xor.t1), 0));
+        rc.uniformMatrix4f("WorldMatrix", wm);
+        this.xor.meshes.render('geosphere', rc);
+    }
     renderStar(gobj, rc) {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
+        if (gobj.sink)
+            rc.uniform3f("Kd", Vector3.make(1, 1, 0));
+        if (gobj.vent)
+            rc.uniform3f("Kd", Vector3.make(0, 0, 1));
         rc.uniformMatrix4f("WorldMatrix", wm);
         this.xor.meshes.render('geosphere', rc);
     }
@@ -1014,6 +1051,10 @@ class Game {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
+        if (gobj.sink)
+            rc.uniform3f("Kd", Vector3.make(0, 1, 1));
+        if (gobj.vent)
+            rc.uniform3f("Kd", Vector3.make(1, 0, 0));
         this.xor.meshes.render('geosphere', rc);
     }
     updateOverlay() {
@@ -1250,10 +1291,11 @@ class App {
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);
         this.p2y = this.getAxis(this.xturnKeys);
-        xor.graphics.sprites[0].position.x += this.p1x * dt * 10;
-        xor.graphics.sprites[0].position.y += this.p1y * dt * 10;
-        xor.graphics.sprites[1].position.x += this.p2x * dt * 10;
-        xor.graphics.sprites[1].position.y += this.p2y * dt * 10;
+        if (xor.input.touches[0].pressed) {
+            let v = Vector3.makeUnit(xor.input.touches[0].dx, -xor.input.touches[0].dy, 0);
+            this.p1x = v.x;
+            this.p1y = v.y;
+        }
         for (let i = 0; i < 4; i++) {
             let spr = xor.graphics.sprites[2 + i];
             let gp = xor.input.gamepads.get(i);

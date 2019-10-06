@@ -207,10 +207,15 @@ class App {
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);
         this.p2y = this.getAxis(this.xturnKeys);
-        xor.graphics.sprites[0].position.x += this.p1x * dt * 10;
-        xor.graphics.sprites[0].position.y += this.p1y * dt * 10;
-        xor.graphics.sprites[1].position.x += this.p2x * dt * 10;
-        xor.graphics.sprites[1].position.y += this.p2y * dt * 10;
+
+        if (xor.input.touches[0].pressed) {
+            let v = Vector3.makeUnit(
+                xor.input.touches[0].dx,
+                -xor.input.touches[0].dy,
+                0);
+            this.p1x = v.x;
+            this.p1y = v.y;
+        }
 
         for (let i = 0; i < 4; i++) {
             let spr = xor.graphics.sprites[2 + i];

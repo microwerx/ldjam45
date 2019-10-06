@@ -22,33 +22,33 @@ class EndoSystemGame {
         if (gobjs.length < MaxGObjects) return;
 
         // update physics locations
-        let starIndex = 0;
-        let planetoidIndex = 0;
-        for (let j = 0; j < this.common.numRows; j++) {
-            for (let i = 0; i < this.common.numCols; i++) {
-                switch (cells[j][i]) {
-                    case NOTHING:
-                        break;
-                    case STAR:
-                        gobjs[StarIndex + starIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-                        starIndex++;
-                        break;
-                    case PLANETOID:
-                        gobjs[PlanetoidCount + planetoidIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
-                        planetoidIndex++;
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
+        // let starIndex = 0;
+        // let planetoidIndex = 0;
+        // for (let j = 0; j < this.common.numRows; j++) {
+        //     for (let i = 0; i < this.common.numCols; i++) {
+        //         switch (cells[j][i]) {
+        //             case NOTHING:
+        //                 break;
+        //             case STAR:
+        //                 gobjs[StarIndex + starIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
+        //                 starIndex++;
+        //                 break;
+        //             case PLANETOID:
+        //                 gobjs[PlanetoidCount + planetoidIndex].x.reset(i * SpaceBetweenStars, j * SpaceBetweenStars, 0);
+        //                 planetoidIndex++;
+        //                 break;
+        //             default:
+        //                 break;
+        //         }
+        //     }
+        // }
 
         // update star physics
         for (let i = 0; i < this.common.MaxStars; i++) {
             let star = gobjs[StarIndex + i];
 
             // disable non-existent stars
-            if (i >= starIndex) {
+            if (i >= this.common.numStars) {
                 star.active = false;
                 continue;
             }
@@ -67,7 +67,6 @@ class EndoSystemGame {
                 planetoid.active = false;
                 continue;
             }
-
 
             planetoid.active = true;
             planetoid.resetForces();
@@ -94,7 +93,11 @@ class EndoSystemGame {
             player.active = true;
             player.resetForces();
 
-            // TODO: allow player to interact with missiles and other players
+            // TODO: allow player to interact with creation stars
+            for (let j = 0; j < this.common.numCreationStars; j++) {
+                let star = gobjs[ExtraStarIndex + j];
+                player.calcInteractionForce(star);
+            }
 
             // allow player to interact with planetoids
             for (let j = 0; j < this.common.numPlanetoids; j++) {
