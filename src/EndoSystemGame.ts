@@ -44,7 +44,7 @@ class EndoSystemGame {
         // }
 
         // update star physics
-        for (let i = 0; i < this.common.MaxStars; i++) {
+        for (let i = 0; i < StarCount; i++) {
             let star = gobjs[StarIndex + i];
 
             // disable non-existent stars
@@ -59,7 +59,7 @@ class EndoSystemGame {
         }
 
         // update planetoid physics
-        for (let i = 0; i < this.common.MaxPlanetoids; i++) {
+        for (let i = 0; i < PlanetoidCount; i++) {
             let planetoid = gobjs[PlanetoidIndex + i];
 
             // disable non-existent planetoids
@@ -87,15 +87,42 @@ class EndoSystemGame {
             planetoid.update(this.xor.dt);
         }
 
+        for (let i = 0; i < CreationStarCount; i++) {
+            let creationStar = gobjs[CreationStarIndex + i];
+            if (i >= this.common.numCreationStars) {
+                creationStar.active = false;
+                return;
+            }
+
+            // TODO: CHANGE when creation stars can be obtained
+            // if (!star.active) return;
+
+            creationStar.active = true;
+            creationStar.resetForces();
+
+            // allow creation star to interact with planetoids
+            for (let j = 0; j < this.common.numPlanetoids; j++) {
+                let planetoid = gobjs[PlanetoidIndex + j];
+                creationStar.calcInteractionForce(planetoid);
+            }
+
+            // allow creation star to interact with stars
+            for (let j = 0; j < this.common.numStars; j++) {
+                let star = gobjs[StarIndex + j];
+                creationStar.calcInteractionForce(star);
+            }
+            creationStar.update(this.xor.dt);
+        }
+
         // update player physics
-        for (let i = PlayerIndex; i <= PlayerMaxIndex; i++) {
+        for (let i = 0; i < PlayerCount; i++) {
             let player = gobjs[PlayerIndex + i];
             player.active = true;
             player.resetForces();
 
             // TODO: allow player to interact with creation stars
             for (let j = 0; j < this.common.numCreationStars; j++) {
-                let star = gobjs[ExtraStarIndex + j];
+                let star = gobjs[CreationStarIndex + j];
                 player.calcInteractionForce(star);
             }
 

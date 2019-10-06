@@ -1,21 +1,17 @@
 
 const PlayerCount = 1;
-const ExtraStarCount = 4;
-const MissileCount = PlayerCount * 10;
+const CreationStarCount = 4;
 const StarCount = 20;
 const PlanetoidCount = StarCount * 2;
 
 const PlayerIndex = 0;
 const PlayerMaxIndex = PlayerIndex + PlayerCount - 1;
 
-const ExtraStarIndex = PlayerMaxIndex + 1;
-const ExtraStarMaxIndex = ExtraStarIndex + ExtraStarCount;
+const CreationStarIndex = PlayerMaxIndex + 1;
+const CreationStarMaxIndex = CreationStarIndex + CreationStarCount - 1;
 
-const MissileIndex = ExtraStarMaxIndex + 1;
-const MissileMaxIndex = MissileIndex + MissileCount - 1;
-
-const StarIndex = MissileMaxIndex + 1;
-const StarMaxIndex = MissileIndex + MissileCount - 1;
+const StarIndex = CreationStarMaxIndex + 1;
+const StarMaxIndex = StarIndex + StarCount - 1;
 
 const PlanetoidIndex = StarMaxIndex + 1;
 const PlanetoidMaxIndex = PlanetoidIndex + PlanetoidCount - 1;
@@ -35,16 +31,23 @@ const PLANETOID = 2;
 
 class CommonGame {
     gobjs: GravityObject[] = [];
+
     gold = 0;
+
     states = new StateMachine(this.xor);
-    MaxStars: number;
-    MaxPlanetoids: number;
+
+    MaxStars: number = 0;
+    MaxPlanetoids: number = 0;
+    MaxCreationStars: number = 0;
+
     cells: number[][] = [];
+
     numStars = 0;
     numPlanetoids = 0;
+    numCreationStars = 0;
+
     minPoint = Vector3.make();
     maxPoint = Vector3.make();
-    numCreationStars = 0;
 
     constructor(
         public xor: LibXOR,
@@ -53,11 +56,12 @@ class CommonGame {
     ) {
         this.MaxStars = numCols << 1;
         this.MaxPlanetoids = numCols << 2;
+        this.MaxCreationStars = numCols >> 1;
         this.gobjs = [];
         for (let i = 0; i < PlayerCount; i++) {
             this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
         }
-        for (let i = 0; i < MissileCount; i++) {
+        for (let i = 0; i < CreationStarCount; i++) {
             this.gobjs.push(new GravityObject(1, 1, 1, this.xor, this.gobjs));
         }
         for (let i = 0; i < StarCount; i++) {
@@ -72,17 +76,6 @@ class CommonGame {
 
     init() {
         this.reset();
-    }
-
-    reset() {
-        this.cells = [];
-        for (let j = 0; j < this.numRows; j++) {
-            let row: number[] = [];
-            for (let i = 0; i < this.numCols; i++) {
-                row.push(0);
-            }
-            this.cells.push(row);
-        }
     }
 
     resize(numCols: number, numRows: number) {
@@ -101,9 +94,22 @@ class CommonGame {
         );
     }
 
-    setStar(col: number, row: number, type: number) {
+    reset() {
+        this.cells = [];
+        for (let j = 0; j < this.numRows; j++) {
+            let row: number[] = [];
+            for (let i = 0; i < this.numCols; i++) {
+                row.push(0);
+            }
+            this.cells.push(row);
+        }
+    }
+
+    setStar(col: number, row: number): boolean {
         if (col < 0 || col >= this.numCols) return false;
         if (row < 0 || row >= this.numRows) return false;
+        if (this.numStars >= this.MaxStars) return false;
+
         if (this.getStar(col - 1, row) == STAR ||
             this.getStar(col + 0, row) == STAR ||
             this.getStar(col + 1, row) == STAR ||
@@ -113,9 +119,8 @@ class CommonGame {
             this.getStar(col - 1, row + 1) == STAR ||
             this.getStar(col + 0, row + 1) == STAR ||
             this.getStar(col + 1, row + 1) == STAR) return false;
-        this.cells[row][col] = type;
-        if (type == STAR) this.numStars++;
-        if (type == PLANETOID) this.numPlanetoids++;
+        this.cells[row][col] = STAR;
+        this.numStars++;
         return true;
     }
 
@@ -175,10 +180,12 @@ class CommonGame {
         }
     }
 
-    createPlanetoid(planetoidIndex: number, i: number, j: number) {
+    createPlanetoid(i: number, j: number) {
+        if (this.numPlanetoids >= this.MaxPlanetoids) return false;
+        let index = this.numPlanetoids;
         const tx = -this.numCols * 0.5 * SpaceBetweenStars;
         const ty = -this.numRows * 0.5 * SpaceBetweenStars;
-        let planetoid = this.gobjs[PlanetoidCount + planetoidIndex];
+        let planetoid = this.gobjs[PlanetoidIndex + index];
         planetoid.active = true;
         planetoid.x.reset(
             tx + i * SpaceBetweenStars,
@@ -189,17 +196,24 @@ class CommonGame {
             planetoid.radius = r;
             planetoid.mass = r * 1e12;
         }
+        this.numPlanetoids++;
+        return true;
     }
 
-    createCreationStar(i: number) {
-        if (i < 0 || i >= PlayerMaxIndex) return;
-        let star = this.gobjs[PlayerIndex + i];
+    createCreationStar(i: number, j: number): boolean {
+        if (this.numCreationStars >= this.MaxCreationStars) return false;
+        let index = this.numCreationStars;
+        const tx = -this.numCols * 0.5 * SpaceBetweenStars;
+        const ty = -this.numRows * 0.5 * SpaceBetweenStars;
+        let star = this.gobjs[CreationStarIndex + index];
         star.x.reset(
-            randbetween(this.minPoint.x, this.maxPoint.x),
-            randbetween(this.minPoint.y, this.maxPoint.y),
+            tx + i * SpaceBetweenStars,
+            ty + j * SpaceBetweenStars,
             0);
         star.active = true;
         star.radius = 2.0;
         star.mass = 1e6;
+        this.numCreationStars++;
+        return true;
     }
 }
