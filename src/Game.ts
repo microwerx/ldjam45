@@ -82,6 +82,8 @@ class Game {
         this.bbox.add(Vector3.make(-p, -p, 0));
 
         ExoCenter.reset(0, 0, -2.5 * this.level * SpaceBetweenStars);
+
+        this.xor.sound.jukebox.play(MUSIC_STARBATTLE2);
     }
 
     createLevel() {
@@ -210,7 +212,7 @@ class Game {
             let b3 = this.app.ENTERbutton;
             let dx = b1 ? this.app.p1x : 0;
             let dy = b2 ? this.app.p1y : 0;
-            if (b1 || b2 || b3) {
+            if (dx || dy || b3) {
                 this.common.sfx(SOUND_EXO_CLICK);
             }
             this.exogame.move(dx, dy);
@@ -223,6 +225,7 @@ class Game {
             this.fadingTime = this.xor.t1;
             this.fadingIn = true;
             this.gameEnded = true;
+            this.xor.sound.jukebox.play(MUSIC_STARBATTLE1);
         }
     }
 

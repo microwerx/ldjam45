@@ -37,6 +37,8 @@ const SOUND_PLAYER_DYING = 4;
 const SOUND_EXO_CLICK = 5;
 const SOUND_CREATE_STAR = 6;
 const SOUND_NOP = 7;
+const SOUND_EXO = 8;
+const SOUND_ENDO = 9;
 
 const SOUNDS: string[] = [
     "PLAYER_DEAD",
@@ -46,8 +48,13 @@ const SOUNDS: string[] = [
     "PLAYER_DYING",
     "EXO_CLICK",
     "SOUND_CREATE_STAR",
-    "SOUND_NOP"
+    "SOUND_NOP",
+    "EXO",
+    "ENDO"
 ];
+
+const MUSIC_STARBATTLE1 = 0;
+const MUSIC_STARBATTLE2 = 1;
 
 class CommonGame {
     gobjs: GravityObject[] = [];

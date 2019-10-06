@@ -466,6 +466,8 @@ const SOUND_PLAYER_DYING = 4;
 const SOUND_EXO_CLICK = 5;
 const SOUND_CREATE_STAR = 6;
 const SOUND_NOP = 7;
+const SOUND_EXO = 8;
+const SOUND_ENDO = 9;
 const SOUNDS = [
     "PLAYER_DEAD",
     "PLANETOID_DEAD",
@@ -474,8 +476,12 @@ const SOUNDS = [
     "PLAYER_DYING",
     "EXO_CLICK",
     "SOUND_CREATE_STAR",
-    "SOUND_NOP"
+    "SOUND_NOP",
+    "EXO",
+    "ENDO"
 ];
+const MUSIC_STARBATTLE1 = 0;
+const MUSIC_STARBATTLE2 = 1;
 class CommonGame {
     // minPoint = Vector3.make();
     // maxPoint = Vector3.make();
@@ -958,6 +964,7 @@ class Game {
         this.bbox.add(Vector3.make(p, p, 0));
         this.bbox.add(Vector3.make(-p, -p, 0));
         ExoCenter.reset(0, 0, -2.5 * this.level * SpaceBetweenStars);
+        this.xor.sound.jukebox.play(MUSIC_STARBATTLE2);
     }
     createLevel() {
         let numStars = randbetweeni(1, this.common.numCols);
@@ -1073,7 +1080,7 @@ class Game {
             let b3 = this.app.ENTERbutton;
             let dx = b1 ? this.app.p1x : 0;
             let dy = b2 ? this.app.p1y : 0;
-            if (b1 || b2 || b3) {
+            if (dx || dy || b3) {
                 this.common.sfx(SOUND_EXO_CLICK);
             }
             this.exogame.move(dx, dy);
@@ -1085,6 +1092,7 @@ class Game {
             this.fadingTime = this.xor.t1;
             this.fadingIn = true;
             this.gameEnded = true;
+            this.xor.sound.jukebox.play(MUSIC_STARBATTLE1);
         }
     }
     render() {
@@ -1338,10 +1346,14 @@ class App {
                 let endo = (this.game.common.states.topName == "ENDO") ? 1 : 0;
                 endo = 1 - endo;
                 this.game.common.states.clear();
-                if (endo)
+                if (endo) {
                     this.game.common.states.push("ENDO", "", 0);
-                else
+                    this.game.common.sfx(SOUND_ENDO);
+                }
+                else {
                     this.game.common.states.push("EXO", "", 0);
+                    this.game.common.sfx(SOUND_EXO);
+                }
             });
             createLabelRow(controls, "TOP", "TOP");
             createLabelRow(controls, "ALT", "ALT");
@@ -1364,13 +1376,6 @@ class App {
         this.xor.triggers.set("ENT", 0.033);
         this.xor.triggers.set("EXOLR", 0.2);
         this.xor.triggers.set("EXOUD", 0.2);
-        this.xor.triggers.set("PLAYER_DEAD", 0.5);
-        this.xor.triggers.set("PLAYER_MINING", 0.5);
-        this.xor.triggers.set("PLANETOID_DEAD", 0.1);
-        this.xor.triggers.set("CREATIONSTAR_DEAD", 0.1);
-        this.xor.triggers.set("PLAYER_DYING", 0.5);
-        this.xor.triggers.set("EXOCLICK", 0.1);
-        this.xor.triggers.set("CREATE_STAR", 0.5);
     }
     /**
      * getAxis(keysToCheck)
@@ -1414,17 +1419,25 @@ class App {
         this.xor.graphics.init();
         this.reset();
         this.xor.sound.init();
-        this.xor.sound.jukebox.add(0, "music/noise.mp3", false);
-        this.xor.sound.jukebox.add(1, "music/maintheme.mp3", false);
-        this.xor.sound.jukebox.add(2, "music/adventuretheme.mp3", false);
-        this.xor.sound.jukebox.add(3, "music/arcadetheme.mp3", false);
-        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/BassDrum1.wav");
-        this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/BassDrum2.wav");
-        this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/HhO.wav");
-        this.xor.sound.sampler.loadSample(SOUND_PLAYER_MINING, "sounds/HhC.wav");
-        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/Tamb.wav");
-        this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "Snare1.wav");
-        this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/Ride.wav");
+        this.xor.sound.jukebox.add(0, "music/starbattle1.mp3", false);
+        this.xor.sound.jukebox.add(1, "music/starbattle2.mp3", false);
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/starbattle-dead.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/starbattle-pdead.wav");
+        this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/starbattle-.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_MINING, "sounds/starbattle-ok.wav");
+        this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/starbattle-bad.wav");
+        this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "sounds/starbattle-click.wav");
+        this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/starbattle-star.wav");
+        this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
+        this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
+        this.xor.triggers.set("PLAYER_DEAD", 0.5);
+        this.xor.triggers.set("PLAYER_MINING", 0.5);
+        this.xor.triggers.set("PLANETOID_DEAD", 0.1);
+        this.xor.triggers.set("CREATIONSTAR_DEAD", 0.1);
+        this.xor.triggers.set("PLAYER_DYING", 0.5);
+        this.xor.triggers.set("EXOCLICK", 0.1);
+        this.xor.triggers.set("EXO", 0.5);
+        this.xor.triggers.set("ENDO", 0.5);
         this.game = new Game(this, this.xor);
         this.game.init();
     }
@@ -1459,18 +1472,10 @@ class App {
         let xor = this.xor;
         xor.input.poll();
         this.updateControls();
-        if (xor.input.checkKeys([" ", "Space"])) {
-            this.reset();
-        }
         this.ESCAPEbutton = xor.input.checkKeys(["Escape"]);
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
-        if (xor.input.checkKeys(["Space"])) {
-            if (xor.triggers.get("SPC").tick(xor.t1)) {
-                hflog.info("pew!");
-            }
-        }
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);

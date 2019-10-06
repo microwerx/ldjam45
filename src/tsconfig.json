@@ -62,7 +62,7 @@
   "files": [
     "App.ts",
     "htmlutils.ts",
-    "GameObject.ts",
+    "GravityObject.ts",
     "Game.ts",
     "CommonGame.ts",
     "ExoSystemGame.ts",
