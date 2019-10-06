@@ -292,7 +292,7 @@ class GravityObject {
         this.thrust_ = Vector3.make(0, 0, 0);
         this.life = 1.0;
         this.angle = 0;
-        this.drag = 0.0;
+        this.drag_ = 0.0;
         this.type = 0;
     }
     get sink() { return this.gravitydir > 0; }
@@ -320,7 +320,7 @@ class GravityObject {
      */
     updateForces() {
         this.a.accum(this.thrust_, 1.0);
-        this.a.accum(this.v, -this.drag);
+        this.a.accum(this.v, -this.drag_);
         const MaxAccel = 50;
         this.a = this.a.clamp(-MaxAccel, MaxAccel);
     }
@@ -427,7 +427,7 @@ class GravityObject {
         this.thrust_.reset(x, y, 0);
     }
     drag(x) {
-        this.drag = GTE.clamp(x, 0.0, 0.1);
+        this.drag_ = GTE.clamp(x, 0.0, 0.1);
     }
     /**
      * Returns the burn factor from this object to the next.

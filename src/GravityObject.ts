@@ -8,7 +8,7 @@ class GravityObject {
     private thrust_ = Vector3.make(0, 0, 0);
     life = 1.0;
     angle = 0;
-    drag = 0.0;
+    drag_ = 0.0;
     type = 0;
 
     /**
@@ -54,7 +54,7 @@ class GravityObject {
      */
     updateForces() {
         this.a.accum(this.thrust_, 1.0);
-        this.a.accum(this.v, -this.drag);
+        this.a.accum(this.v, -this.drag_);
         const MaxAccel = 50;
         this.a = this.a.clamp(-MaxAccel, MaxAccel);
     }
@@ -169,7 +169,7 @@ class GravityObject {
     }
 
     drag(x: number) {
-        this.drag = GTE.clamp(x, 0.0, 0.1);
+        this.drag_ = GTE.clamp(x, 0.0, 0.1);
     }
 
     /**
