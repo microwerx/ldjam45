@@ -958,6 +958,7 @@ class Game {
         if (this.mode == EXOMODE)
             this.common.states.push("EXO", "", 0);
         this.level = this.app.levelRequested;
+        this.common.gold = 0;
         this.common.resize(this.level, this.level);
         this.fadingTime = this.xor.t1;
         this.fadingIn = false;
