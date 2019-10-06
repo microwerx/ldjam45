@@ -8,6 +8,7 @@ class GravityObject {
     life = 1.0;
     active = true;
     angle = 0;
+    drag = 0.1;
 
     /**
      * constructor()
@@ -15,14 +16,17 @@ class GravityObject {
      * @param mass mass in kilograms of this object
      */
     constructor(
-        readonly gravitydir = 1,
-        readonly mass = 1,
+        readonly gravitydir = -1,
+        public mass = 1,
         public radius = 1,
         public xor: LibXOR,
         public activeObjects: GravityObject[]
     ) {
 
     }
+
+    get sink(): boolean { return this.gravitydir > 0; }
+    get vent(): boolean { return this.gravitydir < 0; }
 
     /**
      * update calculates the forces and updates position & velocity
@@ -48,13 +52,22 @@ class GravityObject {
      * updateForces calculates forces between interacting objects
      */
     updateForces() {
+        const drag = 0.05;//1.0 - 1.0 / this.radius;
+        this.a.accum(this.thrust_, 1.0);
+        this.a.accum(this.v, -drag);
     }
 
     /**
      * applyForces calculates new position and velocity
      */
     applyForces() {
-
+        const dt = 0.001;
+        let v_before = this.v.clone();
+        this.v.accum(this.a, dt);
+        let v_after = this.v.clone();
+        this.v = (v_after.add(v_before)).scale(0.5);
+        this.v.clamp(-5.0, 5.0);
+        this.x.accum(this.v, dt);
     }
 
     /**
@@ -117,15 +130,30 @@ class GravityObject {
      * objects
      * @param gobj the other object to interact with
      */
-    calcInteractionForce(gobj: GravityObject) {
+    calcInteractionForce(gobj: GravityObject, radiusFactor: number = 2) {
+        if (!gobj.active) return;
         const G_a = 6.6740831e-11;
         const p = 2;
 
         let r = this.distanceBetweenCenters(gobj);
+        let maxdist = SpaceBetweenStars * radiusFactor;
+        if (r > maxdist) return;
         let x = gobj.dirTo(this);
         let massRatio = this.mass * gobj.mass;
-        let a = -G_a * massRatio / Math.pow(Math.max(r, 1.0), p);
+        let a = this.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 1.0), p);
         this.a.accum(x, a);
+    }
+
+    /**
+     * Returns true if objects are close enough
+     * @param gobj the other object to interact with
+     */
+    canCalcInteraction(gobj: GravityObject): boolean {
+        if (!gobj.active) return false;
+        let r = this.distanceBetweenCenters(gobj);
+        let maxdist = SpaceBetweenStars * 2.0;
+        if (r > maxdist) return false;
+        return true;
     }
 
     /**

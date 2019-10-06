@@ -14,8 +14,8 @@ class App {
         ["KeyQ", "KeyD"]
     ];
     zmoveKeys = [
-        ["KeyW", "KeyS"],
-        ["KeyZ", "KeyS"]
+        ["KeyS", "KeyW"],
+        ["KeyS", "KeyZ"]
     ];
     zturnKeys = [
         ["KeyQ", "KeyE"],
@@ -122,7 +122,7 @@ class App {
         this.xor.graphics.setVideoMode(1.5 * 384, 384);
         this.xor.input.init();
 
-        let defaultrc = this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/gbuffer.frag');
+        let defaultrc = this.xor.renderconfigs.load('default', 'shaders/basic.vert', 'shaders/basic.frag');
         this.xor.renderconfigs.load('overlay', 'shaders/basic.vert', 'shaders/basic.frag');
         defaultrc.useCullFace = true;
 
@@ -133,6 +133,8 @@ class App {
         this.xor.meshes.load('square', 'models/square.obj', null, null);
         this.xor.meshes.load('cube', 'models/cube.obj', null, null);
         this.xor.meshes.load('geosphere', 'models/geosphere.obj', null, null);
+        let circle = this.xor.meshes.create('circle');
+        circle.strokeCircle(0, 0, 1.0, 32);
 
         this.xor.graphics.init();
         this.reset();

@@ -45,13 +45,14 @@ class EndoSystemGame {
 
         // update star physics
         for (let i = 0; i < this.common.MaxStars; i++) {
+            let star = gobjs[StarIndex + i];
+
             // disable non-existent stars
             if (i >= starIndex) {
-                gobjs[i].active = false;
+                star.active = false;
                 continue;
             }
 
-            let star = gobjs[i];
             star.active = true;
             star.resetForces();
             star.update(this.xor.dt);
@@ -59,27 +60,29 @@ class EndoSystemGame {
 
         // update planetoid physics
         for (let i = 0; i < this.common.MaxPlanetoids; i++) {
+            let planetoid = gobjs[PlanetoidIndex + i];
+
             // disable non-existent planetoids
-            if (i >= planetoidIndex) {
-                gobjs[i].active = false;
+            if (i >= this.common.numPlanetoids) {
+                planetoid.active = false;
                 continue;
             }
 
-            let planetoid = gobjs[i];
+
             planetoid.active = true;
             planetoid.resetForces();
 
             // allow planetoids to interact with stars
-            for (let j = 0; j < starIndex; j++) {
+            for (let j = 0; j < this.common.numStars; j++) {
                 let star = gobjs[StarIndex + j];
-                planetoid.calcInteractionForce(star);
+                planetoid.calcInteractionForce(star, 10.0);
             }
 
             // allow planetoids to interact with other planetoids
-            for (let j = 0; j < planetoidIndex; j++) {
+            for (let j = 0; j < this.common.numPlanetoids; j++) {
                 if (j == i) continue;
                 let otherPlanetoid = gobjs[PlanetoidIndex + j];
-                planetoid.calcInteractionForce(otherPlanetoid);
+                planetoid.calcInteractionForce(otherPlanetoid, 10.0);
             }
 
             planetoid.update(this.xor.dt);
@@ -87,22 +90,20 @@ class EndoSystemGame {
 
         // update player physics
         for (let i = PlayerIndex; i <= PlayerMaxIndex; i++) {
-            let player = gobjs[i];
+            let player = gobjs[PlayerIndex + i];
             player.active = true;
             player.resetForces();
 
             // TODO: allow player to interact with missiles and other players
 
             // allow player to interact with planetoids
-            for (let j = 0; j < planetoidIndex; j++) {
-                if (j == i) continue;
+            for (let j = 0; j < this.common.numPlanetoids; j++) {
                 let planetoid = gobjs[PlanetoidIndex + j];
                 player.calcInteractionForce(planetoid);
             }
 
             // allow player to interact with stars
-            for (let j = 0; j < starIndex; j++) {
-                if (j == i) continue;
+            for (let j = 0; j < this.common.numStars; j++) {
                 let star = gobjs[StarIndex + j];
                 player.calcInteractionForce(star);
             }

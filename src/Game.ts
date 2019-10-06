@@ -14,8 +14,8 @@ const CANVASWIDTH = 512;
 const CANVASHEIGHT = 512;
 const GOBJ_PLAYER = 0;
 
-const EndoCenter = Vector3.make(0, 0, -10);
-const ExoCenter = Vector3.make(0, 0, -100);
+let EndoCenter = Vector3.make(0, 0, -10);
+let ExoCenter = Vector3.make(0, 0, -100);
 
 class Game {
     common = new CommonGame(this.xor);
@@ -28,6 +28,8 @@ class Game {
     cameraPosition = Vector3.make();
     exoGridFade = 0;
     exoGrid!: FxIndexedGeometryMesh;
+
+    bbox = new GTE.BoundingBox();
 
     ovcanvas!: HTMLCanvasElement;
     ovctx!: CanvasRenderingContext2D;
@@ -63,31 +65,65 @@ class Game {
         this.level = 5;
         this.common.resize(this.level, this.level);
 
+        this.createLevel();
+        this.createGrid();
+
+        let t = (this.level + 2) * 0.5 * SpaceBetweenStars;
+        this.common.gobjs[PlayerIndex].x.reset(-t * 1.2, 0.0, 0.0);
+        this.bbox.reset();
+        let p = t * 1.5;
+        this.bbox.add(Vector3.make(p, p, 0));
+        this.bbox.add(Vector3.make(-p, -p, 0));
+
+        ExoCenter.reset(0, 0, -2.5 * this.level * SpaceBetweenStars);
+
+        this.common.resetPositions();
+    }
+
+    createLevel() {
         let numStars = 0;
         for (let i = 0; i < this.common.numCols * 2; i++) {
             let col = randbetweeni(0, this.level - 1);
             let row = randbetweeni(0, this.level - 1);
-            let result = this.common.setStar(col, row);
+            let result = this.common.setStar(col, row, STAR);
             if (result) {
                 numStars++;
-                hflog.info("(" + col.toString() + ", " + row.toString() + ")");
+                hflog.info("star (" + col.toString() + ", " + row.toString() + ")");
             }
         }
         hflog.info(numStars.toFixed(0) + " stars created");
 
+        let numPlanetoids = 0;
+        for (let i = 0; i < this.common.numStars * 2; i++) {
+            let col = randbetweeni(0, this.level - 1);
+            let row = randbetweeni(0, this.level - 1);
+            let result = this.common.setStar(col, row, PLANETOID);
+            if (result) {
+                numPlanetoids++;
+                hflog.info("planetoid (" + col.toString() + ", " + row.toString() + ")");
+            }
+        }
+        hflog.info(numPlanetoids.toFixed(0) + " planetoids created");
+    }
+
+    createGrid() {
         let gl = <WebGL2RenderingContext>this.xor.graphics.gl;
         let exoGrid = this.xor.meshes.create("exoGrid");
         exoGrid.reset();
         exoGrid.begin(gl.LINES);
         let t = (this.level + 2) * 0.5 * SpaceBetweenStars;
         for (let i = 0; i <= this.level + 2; i++) {
+            exoGrid.color(0, 1, 0);
             exoGrid.vertex(i * SpaceBetweenStars - t, -t, 0);
+            exoGrid.addIndex(-1);
             exoGrid.vertex(i * SpaceBetweenStars - t, t, 0);
+            exoGrid.addIndex(-1);
             exoGrid.vertex(-t, i * SpaceBetweenStars - t, 0);
+            exoGrid.addIndex(-1);
             exoGrid.vertex(t, i * SpaceBetweenStars - t, 0);
+            exoGrid.addIndex(-1);
         }
-
-        this.common.resetPositions();
+        hflog.info('grid made: -' + t.toFixed(3) + " --> " + t.toFixed(3));
     }
 
     update() {
@@ -107,6 +143,8 @@ class Game {
         let app = this.app;
 
         if (this.mode == ENDOMODE) {
+            let player = this.common.gobjs[PlayerIndex];
+            EndoCenter.reset(-player.x.x, -player.x.y, -50);
             let distance = EndoCenter.distance(this.cameraPosition);
             if (distance > 1) {
                 let dirTo = this.cameraPosition.dirTo(EndoCenter);
@@ -119,7 +157,14 @@ class Game {
                 let dirTo = this.cameraPosition.dirTo(ExoCenter);
                 this.cameraPosition.accum(dirTo, this.xor.dt * distance);
             }
-            this.exoGridFade = GTE.clamp(1.0 - distance, 0.0, 1.0);
+            this.exoGridFade = GTE.clamp(10.0 - distance, 0.0, 10.0) / 10.0;
+        }
+
+        this.exoGridFade = 0.25 + 0.75 * GTE.clamp(Math.abs(this.cameraPosition.z), 0.0, 100.0) / 100.0;
+        for (let g of this.common.gobjs) {
+            g.x.clamp3(
+                this.bbox.minBounds,
+                this.bbox.maxBounds);
         }
 
         if (state.topAlt == "PAUSE") {
@@ -154,17 +199,22 @@ class Game {
 
         let rc = this.xor.renderconfigs.use('default');
         if (rc) {
-            let projMatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 100.0);
+            let projMatrix = Matrix4.makePerspectiveY(45.0, 1.5, 1.0, 10 + Math.abs(ExoCenter.z));
             let cameraMatrix = Matrix4.makeTranslation3(this.cameraPosition);
             rc.uniformMatrix4f('ProjectionMatrix', projMatrix);
             rc.uniformMatrix4f('CameraMatrix', cameraMatrix);
+
+            let wm = Matrix4.makeIdentity();
+            rc.uniformMatrix4f("WorldMatrix", wm);
+            rc.uniform3f("Kd", Vector3.make(0, this.exoGridFade, 0));
+            this.xor.meshes.render('exoGrid', rc);
+
             if (this.mode == ENDOMODE) {
-                this.renderEndoMode(rc);
-                rc.restore();
+                this.renderSystem(rc);
             } else if (this.mode == EXOMODE) {
-                this.renderExoMode(rc);
-                rc.restore();
+                this.renderSystem(rc);
             }
+            rc.restore();
         }
 
         this.updateOverlay();
@@ -172,55 +222,39 @@ class Game {
         this.renderOverlay();
     }
 
-
-    renderEndoMode(rc: FxRenderConfig) {
-        // render player
-        // render star systems
-        // render planetoids
-
+    renderSystem(rc: FxRenderConfig) {
+        rc.uniform3f("Kd", Vector3.make(1, 0, 1));
         for (let i = 0; i <= PlayerMaxIndex; i++) {
             let player = this.common.gobjs[PlayerIndex + i];
             if (!player.active) continue;
             this.renderPlayer(player, rc);
         }
 
+        let player = this.common.gobjs[PlayerIndex];
+
+        rc.uniform3f("Kd", Vector3.make(1, 1, 0));
         for (let i = 0; i <= StarMaxIndex; i++) {
             let star = this.common.gobjs[StarIndex + i];
             if (!star.active) continue;
+            if (star.sink) rc.uniform3f("Kd", Vector3.make(1, 1, 0));
+            if (star.vent) rc.uniform3f("Kd", Vector3.make(0, 0, 1));
             this.renderStar(star, rc);
+            if (player.canCalcInteraction(star)) {
+                this.xor.meshes.render('circle', rc);
+            }
         }
 
+        rc.uniform3f("Kd", Vector3.make(0.4, 0.2, 0));
         for (let i = 0; i <= PlanetoidMaxIndex; i++) {
             let planetoid = this.common.gobjs[PlanetoidIndex + i];
             if (!planetoid.active) continue;
+            if (planetoid.sink) rc.uniform3f("Kd", Vector3.make(0.0, 1.0, 1.0));
+            if (planetoid.vent) rc.uniform3f("Kd", Vector3.make(1.0, 1.0, 0.0));
             this.renderPlanetoid(planetoid, rc);
+            if (player.canCalcInteraction(planetoid)) {
+                this.xor.meshes.render('circle', rc);
+            }
         }
-    }
-
-    renderExoMode(rc: FxRenderConfig) {
-        rc.uniform3f("Kd", Vector3.make(1, 1, 1));
-        for (let i = 0; i <= PlayerMaxIndex; i++) {
-            let player = this.common.gobjs[PlayerIndex + i];
-            if (!player.active) continue;
-            this.renderPlayer(player, rc);
-        }
-
-        for (let i = 0; i <= StarMaxIndex; i++) {
-            let star = this.common.gobjs[StarIndex + i];
-            if (!star.active) continue;
-            this.renderStar(star, rc);
-        }
-
-        for (let i = 0; i <= PlanetoidMaxIndex; i++) {
-            let planetoid = this.common.gobjs[PlanetoidIndex + i];
-            if (!planetoid.active) continue;
-            this.renderPlanetoid(planetoid, rc);
-        }
-
-        let wm = Matrix4.makeIdentity();
-        rc.uniformMatrix4f("WorldMatrix", wm);
-        rc.uniform3f("Kd", Vector3.make(0, this.exoGridFade, 0));
-        this.xor.meshes.render('exoGrid', rc);
     }
 
     renderPlayer(gobj: GravityObject, rc: FxRenderConfig) {

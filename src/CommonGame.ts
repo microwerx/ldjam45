@@ -26,6 +26,9 @@ const SpaceBetweenStars = 10.0;
 const MinStarRadius = 3.0;
 const MaxStarRadius = 5.0;
 
+const MinPlanetoidRadius = 1.5;
+const MaxPlanetoidRadius = 2.5;
+
 const NOTHING = 0;
 const STAR = 1;
 const PLANETOID = 2;
@@ -97,7 +100,7 @@ class CommonGame {
         );
     }
 
-    setStar(col: number, row: number) {
+    setStar(col: number, row: number, type: number) {
         if (col < 0 || col >= this.numCols) return false;
         if (row < 0 || row >= this.numRows) return false;
         if (this.getStar(col - 1, row) == STAR ||
@@ -109,7 +112,9 @@ class CommonGame {
             this.getStar(col - 1, row + 1) == STAR ||
             this.getStar(col + 0, row + 1) == STAR ||
             this.getStar(col + 1, row + 1) == STAR) return false;
-        this.cells[row][col] = STAR;
+        this.cells[row][col] = type;
+        if (type == STAR) this.numStars++;
+        if (type == PLANETOID) this.numPlanetoids++;
         return true;
     }
 
@@ -141,15 +146,25 @@ class CommonGame {
                             ty + j * SpaceBetweenStars,
                             0);
                         if (gobjs[StarIndex + starIndex].radius <= 1) {
-                            gobjs[StarIndex + starIndex].radius = randbetween(MinStarRadius, MaxStarRadius);
+                            let r = randbetween(MinStarRadius, MaxStarRadius);
+                            let m = r * 1e12;
+                            gobjs[StarIndex + starIndex].radius = r;
+                            gobjs[StarIndex + starIndex].mass = m;
                         }
                         starIndex++;
                         break;
                     case PLANETOID:
-                        gobjs[PlanetoidCount + planetoidIndex].x.reset(
+                        let planetoid = gobjs[PlanetoidCount + planetoidIndex];
+                        planetoid.x.reset(
                             tx + i * SpaceBetweenStars,
                             ty + j * SpaceBetweenStars,
                             0);
+                        if (planetoid.radius <= 1) {
+                            let r = randbetween(MinPlanetoidRadius, MaxPlanetoidRadius);
+                            let m = r * 1e12;
+                            planetoid.radius = r;
+                            planetoid.mass = m;
+                        }
                         planetoidIndex++;
                         break;
                     default:
@@ -159,5 +174,6 @@ class CommonGame {
         }
         this.numStars = starIndex;
         this.numPlanetoids = planetoidIndex;
+        hflog.info("planetary system configured");
     }
 }

@@ -30,7 +30,7 @@ void main() {
         color += map.rgb;    
         alpha = map.a;
     } else {
-        color += Kd;
+        color += vColor;
     }
     oFragColor = vec4(color, alpha);
 }
