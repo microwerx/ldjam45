@@ -1043,8 +1043,6 @@ class Game {
         rc.uniform3f("Kd", Vector3.make(0.4, 0.2, 0));
         for (let i = 0; i < PlanetoidCount; i++) {
             let planetoid = this.common.gobjs[PlanetoidIndex + i];
-            if (!planetoid)
-                continue;
             if (!planetoid.active)
                 continue;
             this.renderPlanetoid(planetoid, rc);
