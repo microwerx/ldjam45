@@ -191,7 +191,7 @@ class CommonGame {
     }
 
     update() {
-        ww
+
     }
 
     createStar(i: number, j: number) {

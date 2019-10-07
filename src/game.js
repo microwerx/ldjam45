@@ -601,7 +601,6 @@ class CommonGame {
         return this.cells[row][col];
     }
     update() {
-        ww;
     }
     createStar(i, j) {
         if (this.numStars >= this.MaxStars)
@@ -1086,7 +1085,7 @@ class Game {
         }
         let player = this.common.gobjs[PlayerIndex];
         if (this.xor.triggers.get("SPC").tick(this.xor.t1)) {
-            if (this.app.SPACEbutton) {
+            if (this.app.newSPACEbutton.pressed) {
                 this.swapEndoExoMode();
                 return;
             }
@@ -1327,6 +1326,25 @@ class Game {
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 /// <reference path="./htmlutils.ts" />
 /// <reference path="./Game.ts" />
+class ButtonDetector {
+    constructor() {
+        this.pressed_ = false;
+        this.cur_ = false;
+        this.last_ = false;
+    }
+    get pressed() {
+        let ret = this.pressed_;
+        this.pressed_ = false;
+        return ret;
+    }
+    set pressed(val) {
+        this.last_ = this.cur_;
+        this.cur_ = val;
+        if (this.cur_ && !this.last_) {
+            this.pressed_ = true;
+        }
+    }
+}
 class App {
     constructor() {
         // setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
@@ -1368,6 +1386,7 @@ class App {
         this.ESCAPEbutton = 0;
         this.SPACEbutton = 0;
         this.TABbutton = 0;
+        this.newSPACEbutton = new ButtonDetector();
         this.pauseGame = false;
         let self = this;
         let controls = document.getElementById('controls');
@@ -1510,6 +1529,7 @@ class App {
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
+        this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);

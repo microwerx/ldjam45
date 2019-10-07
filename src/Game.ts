@@ -207,7 +207,7 @@ class Game {
         let player = this.common.gobjs[PlayerIndex];
 
         if (this.xor.triggers.get("SPC").tick(this.xor.t1)) {
-            if (this.app.SPACEbutton) {
+            if (this.app.newSPACEbutton.pressed) {
                 this.swapEndoExoMode();
                 return;
             }
