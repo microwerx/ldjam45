@@ -191,13 +191,13 @@ class Game {
         }
 
         if (state.topAlt == "PAUSE") {
-            if (app.ESCAPEbutton && xor.triggers.get("ESC").tick(xor.t1)) {
+            if (app.newESCAPEbutton.pressed) {
                 state.pop();
                 this.gamePaused = false;
             }
             return;
         } else if (state.topAlt != "PAUSE") {
-            if (app.ESCAPEbutton && this.xor.triggers.get("ESC").tick(xor.t1)) {
+            if (app.newESCAPEbutton.pressed) {
                 state.push(state.topName, "PAUSE", 0);
                 this.gamePaused = true;
                 return;
@@ -223,7 +223,7 @@ class Game {
             this.exogame.update();
             let b1 = this.xor.triggers.get("EXOLR").tick(this.xor.t1);
             let b2 = this.xor.triggers.get("EXOUD").tick(this.xor.t1);
-            let b3 = this.app.ENTERbutton;
+            let b3 = this.app.newENTERbutton.pressed;
             let dx = b1 ? this.app.p1x : 0;
             let dy = b2 ? this.app.p1y : 0;
             if (dx || dy || b3) {
