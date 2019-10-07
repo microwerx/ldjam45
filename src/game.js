@@ -1386,7 +1386,10 @@ class App {
         this.ESCAPEbutton = 0;
         this.SPACEbutton = 0;
         this.TABbutton = 0;
+        this.newENTERbutton = new ButtonDetector();
+        this.newESCAPEbutton = new ButtonDetector();
         this.newSPACEbutton = new ButtonDetector();
+        this.newTABbutton = new ButtonDetector();
         this.pauseGame = false;
         let self = this;
         let controls = document.getElementById('controls');
@@ -1530,6 +1533,9 @@ class App {
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
         this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
+        this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
+        this.newENTERbutton.pressed = this.ENTERbutton > 0.0;
+        this.newTABbutton.pressed = this.TABbutton > 0.0;
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);

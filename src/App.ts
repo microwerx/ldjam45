@@ -70,7 +70,10 @@ class App {
     SPACEbutton = 0;
     TABbutton = 0;
 
+    newENTERbutton = new ButtonDetector();
+    newESCAPEbutton = new ButtonDetector();
     newSPACEbutton = new ButtonDetector();
+    newTABbutton = new ButtonDetector();
 
     pauseGame = false;
 
@@ -236,6 +239,9 @@ class App {
         this.TABbutton = xor.input.checkKeys(["Tab"]);
 
         this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
+        this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
+        this.newENTERbutton.pressed = this.ENTERbutton > 0.0;
+        this.newTABbutton.pressed = this.TABbutton > 0.0;
 
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
