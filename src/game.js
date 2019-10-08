@@ -1484,8 +1484,8 @@ class App {
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/starbattle-bad.wav");
         this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "sounds/starbattle-click.wav");
         this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/starbattle-star.wav");
-        this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
-        this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
         this.xor.triggers.set("PLAYER_DEAD", 0.5);
         this.xor.triggers.set("PLAYER_MINING", 0.5);
         this.xor.triggers.set("PLANETOID_DEAD", 0.1);
