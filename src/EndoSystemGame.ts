@@ -126,9 +126,16 @@ class EndoSystemGame {
                 let planetoid = gobjs[PlanetoidIndex + j];
                 player.calcInteractionForce(planetoid);
 
+                if (!planetoid.active) continue;
+
                 if (player.distanceBetween(planetoid) < 0) {
-                    this.common.sfx(SOUND_PLAYER_MINING);
                     planetoid.life -= this.xor.dt;
+                    if (planetoid.life > 0) {
+                        this.common.sfx(SOUND_PLAYER_MINING);
+                    } else {
+                        planetoid.active = false;
+                        this.common.sfx(SOUND_PLAYER_DEAD);
+                    }
                     this.common.gold += this.xor.dt;
                 }
             }

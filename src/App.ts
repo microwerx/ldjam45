@@ -179,7 +179,7 @@ class App {
         this.xor.sound.jukebox.add(1, "music/starbattlemusic2.mp3", false);
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DEAD, "sounds/starbattle-dead.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLANETOID_DEAD, "sounds/starbattle-pdead.wav");
-        this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/starbattle-.wav");
+        this.xor.sound.sampler.loadSample(SOUND_CREATIONSTAR_DEAD, "sounds/starbattle-endo.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_MINING, "sounds/starbattle-ok.wav");
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/starbattle-bad.wav");
         this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "sounds/starbattle-click.wav");
@@ -332,7 +332,7 @@ class App {
 
         let help = "<h2>Help/Tutorial</h2>";
         if (!this.startPressed) {
-            help += "<p>Press Start Button</p>";
+            help += "<p>Click Start Game button or press ENTER</p>";
         } else {
             help += "<div style='text-align: left; font-size: 1.5em;'>";
             if (exomode) {
