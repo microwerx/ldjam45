@@ -346,9 +346,9 @@ class App {
             }
 
             if (numstars > 0) {
-                help += "<p>You have a creation star! Wwitch to EXO mode to create a new star system.</p>";
+                help += "<p>You have a creation star! Switch to EXO mode to create a new star system.</p>";
             } else {
-                help += "<p>You have no WHITE creation stars. Wwitch to ENDO mode to move around and find one.</p>"
+                help += "<p>You have no WHITE creation stars. Switch to ENDO mode to move around and find one.</p>"
             }
 
             if (numgold < 10) {

@@ -1639,10 +1639,10 @@ class App {
                 help += "<p>Use the WASD keys to move the cursor on the grid. Green means you can create a star. Red means you cannot create a star in that location.</p>";
             }
             if (numstars > 0) {
-                help += "<p>You have a creation star! Wwitch to EXO mode to create a new star system.</p>";
+                help += "<p>You have a creation star! Switch to EXO mode to create a new star system.</p>";
             }
             else {
-                help += "<p>You have no WHITE creation stars. Wwitch to ENDO mode to move around and find one.</p>";
+                help += "<p>You have no WHITE creation stars. Switch to ENDO mode to move around and find one.</p>";
             }
             if (numgold < 10) {
                 help += "<p>You can collect gold from the orbiting planetoids. When a planetoid has been exhausted, it will be destroyed.</p>";
