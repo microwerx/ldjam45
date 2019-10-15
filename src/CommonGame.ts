@@ -130,9 +130,9 @@ class CommonGame {
 
     reset() {
         this.cells = [];
-        for (let j = 0; j < this.numRows; j++) {
+        for (let j = 0; j <= this.numRows; j++) {
             let row: number[] = [];
-            for (let i = 0; i < this.numCols; i++) {
+            for (let i = 0; i <= this.numCols; i++) {
                 row.push(0);
             }
             this.cells.push(row);
@@ -150,8 +150,8 @@ class CommonGame {
     }
 
     placeable(col: number, row: number): boolean {
-        if (col < 0 || col >= this.numCols) return false;
-        if (row < 0 || row >= this.numRows) return false;
+        if (col < 0 || col > this.numCols) return false;
+        if (row < 0 || row > this.numRows) return false;
         if (this.getStar(col - 1, row) == STAR ||
             this.getStar(col + 0, row) == STAR ||
             this.getStar(col + 1, row) == STAR ||
@@ -165,8 +165,8 @@ class CommonGame {
     }
 
     setStar(col: number, row: number): boolean {
-        if (col < 0 || col >= this.numCols) return false;
-        if (row < 0 || row >= this.numRows) return false;
+        if (col < 0 || col > this.numCols) return false;
+        if (row < 0 || row > this.numRows) return false;
         if (this.numStars >= this.MaxStars) return false;
 
         if (!this.placeable(col, row)) return false;
@@ -185,8 +185,8 @@ class CommonGame {
     }
 
     getStar(col: number, row: number): number {
-        if (col < 0 || col >= this.numCols) return 0;
-        if (row < 0 || row >= this.numRows) return 0;
+        if (col < 0 || col > this.numCols) return 0;
+        if (row < 0 || row > this.numRows) return 0;
         return this.cells[row][col];
     }
 

@@ -537,9 +537,9 @@ class CommonGame {
     }
     reset() {
         this.cells = [];
-        for (let j = 0; j < this.numRows; j++) {
+        for (let j = 0; j <= this.numRows; j++) {
             let row = [];
-            for (let i = 0; i < this.numCols; i++) {
+            for (let i = 0; i <= this.numCols; i++) {
                 row.push(0);
             }
             this.cells.push(row);
@@ -553,9 +553,9 @@ class CommonGame {
         this.creationStarsCollected = 0;
     }
     placeable(col, row) {
-        if (col < 0 || col >= this.numCols)
+        if (col < 0 || col > this.numCols)
             return false;
-        if (row < 0 || row >= this.numRows)
+        if (row < 0 || row > this.numRows)
             return false;
         if (this.getStar(col - 1, row) == STAR ||
             this.getStar(col + 0, row) == STAR ||
@@ -570,9 +570,9 @@ class CommonGame {
         return true;
     }
     setStar(col, row) {
-        if (col < 0 || col >= this.numCols)
+        if (col < 0 || col > this.numCols)
             return false;
-        if (row < 0 || row >= this.numRows)
+        if (row < 0 || row > this.numRows)
             return false;
         if (this.numStars >= this.MaxStars)
             return false;
@@ -594,9 +594,9 @@ class CommonGame {
         return true;
     }
     getStar(col, row) {
-        if (col < 0 || col >= this.numCols)
+        if (col < 0 || col > this.numCols)
             return 0;
-        if (row < 0 || row >= this.numRows)
+        if (row < 0 || row > this.numRows)
             return 0;
         return this.cells[row][col];
     }
@@ -1070,14 +1070,14 @@ class Game {
             g.x.clamp3(this.bbox.minBounds, this.bbox.maxBounds);
         }
         if (state.topAlt == "PAUSE") {
-            if (app.ESCAPEbutton && xor.triggers.get("ESC").tick(xor.t1)) {
+            if (app.newESCAPEbutton.pressed) {
                 state.pop();
                 this.gamePaused = false;
             }
             return;
         }
         else if (state.topAlt != "PAUSE") {
-            if (app.ESCAPEbutton && this.xor.triggers.get("ESC").tick(xor.t1)) {
+            if (app.newESCAPEbutton.pressed) {
                 state.push(state.topName, "PAUSE", 0);
                 this.gamePaused = true;
                 return;
@@ -1085,7 +1085,7 @@ class Game {
         }
         let player = this.common.gobjs[PlayerIndex];
         if (this.xor.triggers.get("SPC").tick(this.xor.t1)) {
-            if (this.app.SPACEbutton) {
+            if (this.app.newSPACEbutton.pressed) {
                 this.swapEndoExoMode();
                 return;
             }
@@ -1098,7 +1098,7 @@ class Game {
             this.exogame.update();
             let b1 = this.xor.triggers.get("EXOLR").tick(this.xor.t1);
             let b2 = this.xor.triggers.get("EXOUD").tick(this.xor.t1);
-            let b3 = this.app.ENTERbutton;
+            let b3 = this.app.newENTERbutton.pressed;
             let dx = b1 ? this.app.p1x : 0;
             let dy = b2 ? this.app.p1y : 0;
             if (dx || dy || b3) {
@@ -1326,6 +1326,25 @@ class Game {
 /// <reference path="../../LibXOR/LibXOR.d.ts" />
 /// <reference path="./htmlutils.ts" />
 /// <reference path="./Game.ts" />
+class ButtonDetector {
+    constructor() {
+        this.pressed_ = false;
+        this.cur_ = false;
+        this.last_ = false;
+    }
+    get pressed() {
+        let ret = this.pressed_;
+        this.pressed_ = false;
+        return ret;
+    }
+    set pressed(val) {
+        this.last_ = this.cur_;
+        this.cur_ = val;
+        if (this.cur_ && !this.last_) {
+            this.pressed_ = true;
+        }
+    }
+}
 class App {
     constructor() {
         // setIdToHtml("desc", "<p>This is a test of the LibXOR retro console.</p>");
@@ -1367,6 +1386,10 @@ class App {
         this.ESCAPEbutton = 0;
         this.SPACEbutton = 0;
         this.TABbutton = 0;
+        this.newENTERbutton = new ButtonDetector();
+        this.newESCAPEbutton = new ButtonDetector();
+        this.newSPACEbutton = new ButtonDetector();
+        this.newTABbutton = new ButtonDetector();
         this.pauseGame = false;
         let self = this;
         let controls = document.getElementById('controls');
@@ -1461,8 +1484,8 @@ class App {
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/starbattle-bad.wav");
         this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "sounds/starbattle-click.wav");
         this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/starbattle-star.wav");
-        this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
-        this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
         this.xor.triggers.set("PLAYER_DEAD", 0.5);
         this.xor.triggers.set("PLAYER_MINING", 0.5);
         this.xor.triggers.set("PLANETOID_DEAD", 0.1);
@@ -1509,6 +1532,10 @@ class App {
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
+        this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
+        this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
+        this.newENTERbutton.pressed = this.ENTERbutton > 0.0;
+        this.newTABbutton.pressed = this.TABbutton > 0.0;
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
         this.p2x = this.getAxis(this.yturnKeys);

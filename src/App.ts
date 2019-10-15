@@ -2,6 +2,30 @@
 /// <reference path="./htmlutils.ts" />
 /// <reference path="./Game.ts" />
 
+class ButtonDetector {
+    private pressed_ = false;
+    private cur_ = false;
+    private last_ = false;
+
+    constructor() {
+
+    }
+
+    get pressed(): boolean {
+        let ret = this.pressed_;
+        this.pressed_ = false;
+        return ret;
+    }
+
+    set pressed(val: boolean) {
+        this.last_ = this.cur_;
+        this.cur_ = val;
+        if (this.cur_ && !this.last_) {
+            this.pressed_ = true;
+        }
+    }
+}
+
 class App {
     xor = new LibXOR("project");
     game = new Game(this, this.xor);
@@ -45,6 +69,11 @@ class App {
     ESCAPEbutton = 0;
     SPACEbutton = 0;
     TABbutton = 0;
+
+    newENTERbutton = new ButtonDetector();
+    newESCAPEbutton = new ButtonDetector();
+    newSPACEbutton = new ButtonDetector();
+    newTABbutton = new ButtonDetector();
 
     pauseGame = false;
 
@@ -152,8 +181,8 @@ class App {
         this.xor.sound.sampler.loadSample(SOUND_PLAYER_DYING, "sounds/starbattle-bad.wav");
         this.xor.sound.sampler.loadSample(SOUND_EXO_CLICK, "sounds/starbattle-click.wav");
         this.xor.sound.sampler.loadSample(SOUND_CREATE_STAR, "sounds/starbattle-star.wav");
-        this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
-        this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_EXO, "sounds/starbattle-exo.wav");
+        // this.xor.sound.sampler.loadSample(SOUND_ENDO, "sounds/starbattle-endo.wav");
 
         this.xor.triggers.set("PLAYER_DEAD", 0.5);
         this.xor.triggers.set("PLAYER_MINING", 0.5);
@@ -208,6 +237,11 @@ class App {
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
+
+        this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
+        this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
+        this.newENTERbutton.pressed = this.ENTERbutton > 0.0;
+        this.newTABbutton.pressed = this.TABbutton > 0.0;
 
         this.p1x = this.getAxis(this.xmoveKeys);
         this.p1y = this.getAxis(this.zmoveKeys);
