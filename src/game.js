@@ -803,8 +803,8 @@ class EndoSystemGame {
                 player.calcInteractionForce(planetoid);
                 if (player.distanceBetween(planetoid) < 0) {
                     this.common.sfx(SOUND_PLAYER_MINING);
-                    planetoid.life -= 0.1 * this.xor.dt;
-                    this.common.gold += 0.1 * this.xor.dt;
+                    planetoid.life -= this.xor.dt;
+                    this.common.gold += this.xor.dt;
                 }
             }
             // allow player to interact with stars
@@ -1109,7 +1109,7 @@ class Game {
                 this.exogame.placeStar();
             }
         }
-        if (!this.fadingIn && player.life < 0) {
+        if (this.app.startPressed && !this.fadingIn && player.life < 0) {
             this.fadingTime = this.xor.t1;
             this.fadingIn = true;
             this.gameEnded = true;
@@ -1353,6 +1353,8 @@ class App {
         this.theta = 0;
         this.levelRequested = 7;
         this.userDrag = 0;
+        this.startPressed = false;
+        this.musicStarted = false;
         this.euroKeys = 0;
         this.xmoveKeys = [
             ["KeyA", "KeyD"],
@@ -1391,10 +1393,12 @@ class App {
         this.newSPACEbutton = new ButtonDetector();
         this.newTABbutton = new ButtonDetector();
         this.pauseGame = false;
+        this.helpDiv = document.getElementById('help');
         let self = this;
         let controls = document.getElementById('controls');
         if (controls) {
             createButtonRow(controls, "bStartGame", "Start Game", () => {
+                self.startPressed = true;
                 self.reset();
             });
             createButtonRow(controls, "bZSDF", "ZSDF/WASD", () => {
@@ -1525,9 +1529,25 @@ class App {
      * @param dt timeElapsedSinceLastFrame
      */
     update(dt) {
+        const loaded = this.xor.renderconfigs.loaded && this.xor.sound.sampler.loaded && this.xor.fluxions.scenegraph.loaded;
+        if (!loaded) {
+            this.help();
+            return;
+        }
+        if (!this.startPressed && !this.musicStarted) {
+            this.xor.sound.jukebox.play(MUSIC_STARBATTLE1);
+            this.musicStarted = true;
+        }
         let xor = this.xor;
         xor.input.poll();
         this.updateControls();
+        if (!this.startPressed) {
+            if (xor.input.checkKeys(["Enter"])) {
+                this.startPressed = true;
+                this.reset();
+                return;
+            }
+        }
         this.ESCAPEbutton = xor.input.checkKeys(["Escape"]);
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
@@ -1556,6 +1576,7 @@ class App {
         }
         this.theta += dt;
         this.game.update();
+        this.help();
     }
     /**
      * updateControls()
@@ -1571,9 +1592,67 @@ class App {
         // setDivLabelValue("ALT", this.p1y.toString());
     }
     /**
+     * help() displays realtime help to the user.
+     */
+    help() {
+        if (!this.helpDiv)
+            return;
+        let h = this.helpDiv;
+        const exomode = this.game.mode == EXOMODE;
+        const endomode = this.game.mode == ENDOMODE;
+        const numstars = this.game.common.creationStarsCollected;
+        const numgold = this.game.common.gold;
+        const numhealth = this.game.common.gobjs[PlayerIndex].life;
+        if (!this.xor.renderconfigs.loaded) {
+            h.innerHTML = "Loading Renderconfigs";
+            return;
+        }
+        else if (!this.xor.sound.sampler.loaded) {
+            h.innerHTML = "Loading Sounds";
+            return;
+        }
+        else if (!this.xor.fluxions.scenegraph.loaded) {
+            h.innerHTML = "Loading Graphics";
+            return;
+        }
+        let help = "<h2>Help/Tutorial</h2>";
+        if (!this.startPressed) {
+            help += "<p>Press Start Button</p>";
+        }
+        else {
+            help += "<div style='text-align: left; font-size: 1.5em;'>";
+            if (exomode) {
+                help += "<p>You are in EXO mode. Please press SPACE to switch to ENDO mode.<p>";
+            }
+            else {
+                help += "<p>You are in ENDO mode. Please press SPACE to switch to EXO mode.</p>";
+            }
+            if (exomode && numstars > 0) {
+                help += "<p>Use the WASD keys to move the cursor on the grid. Green means you can create a star. Red means you cannot create a star in that location.</p>";
+            }
+            if (numstars > 0) {
+                help += "<p>You have a creation star! Wwitch to EXO mode to create a new star system.</p>";
+            }
+            else {
+                help += "<p>You have no WHITE creation stars. Wwitch to ENDO mode to move around and find one.</p>";
+            }
+            if (numgold < 10) {
+                help += "<p>You can collect gold from the orbiting planetoids. When a planetoid has been exhausted, it will be destroyed.</p>";
+            }
+            if (numhealth < 1) {
+                help += "<p style='color: red'>Warning! Do not hit the stars, they will destroy you!</p>";
+            }
+            help += "</div>";
+        }
+        h.innerHTML = help;
+    }
+    /**
      * render() draws the screen
      */
     render() {
+        const loaded = this.xor.renderconfigs.loaded && this.xor.sound.sampler.loaded && this.xor.fluxions.scenegraph.loaded;
+        if (!loaded)
+            return;
         let xor = this.xor;
         let gl = xor.graphics.gl;
         let mixColor = Math.floor(0.5 * (1.0 + Math.sin(xor.t1)) * 6 + 0.5);

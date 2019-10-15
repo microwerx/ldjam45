@@ -235,7 +235,7 @@ class Game {
             }
         }
 
-        if (!this.fadingIn && player.life < 0) {
+        if (this.app.startPressed && !this.fadingIn && player.life < 0) {
             this.fadingTime = this.xor.t1;
             this.fadingIn = true;
             this.gameEnded = true;

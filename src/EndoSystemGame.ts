@@ -128,8 +128,8 @@ class EndoSystemGame {
 
                 if (player.distanceBetween(planetoid) < 0) {
                     this.common.sfx(SOUND_PLAYER_MINING);
-                    planetoid.life -= 0.1 * this.xor.dt;
-                    this.common.gold += 0.1 * this.xor.dt;
+                    planetoid.life -= this.xor.dt;
+                    this.common.gold += this.xor.dt;
                 }
             }
 
