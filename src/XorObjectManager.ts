@@ -19,28 +19,51 @@ namespace XOR {
         constructor(public xor: LibXOR) { }
 
         add(index: number, count: number) {
+            let length = this.objects.length;
             this.arrayInfo.set(index | 0,
-                new ArrayIndexInfo(this.objects.length, count));
-            this.objects.length = this.objects.length + count;
+                new ArrayIndexInfo(length, count));
+            this.objects.length = length + count;
+            for (let i = 0; i < count; i++) {
+                this.objects[i + length] = null;
+            }
         }
 
-        get(index: number, i: number): GameObject {
+        get(index: number, i: number): GameObject | null {
             if (!this.arrayInfo.has(index)) {
-                return this.unknownObject;
+                return null;
             }
             let ainfo = this.arrayInfo.get(index);
             if (i < 0 && i >= ainfo.length) { return this.unknownObject; }
             let obj = this.objects[i + ainfo.first];
             if (!obj) {
-                hflog.error("Object " + index + "/" + i + " does not exist!");
+                return null;
+            }
+            return obj;
+        }
+
+        safeget(index: number, i: number): GameObject {
+            let obj = this.safeget(index, i);
+            if (!obj) {
+                hflog.error("GameObject " + index + "/" + i + " does not exist!");
                 return this.unknownObject;
             }
             return obj;
         }
 
         set(index: number, i: number, gobj: GameObject) {
+            if (this.arrayInfo.has(index)) {
+                hflog.error("Trying to set unknown game object type " + index);
+                return;
+            }
             gobj.objectType = index;
             gobj.arrayIndex = i;
+            gobj.gobjs = this;
+            const ainfo = this.arrayInfo.get(index);
+            if (i < 0 || i >= ainfo.length) {
+                hflog.error("Trying to set unknown game object index " + i);
+                return;
+            }
+            this.objects[i + ainfo.first] = gobj;
         }
     }
 }
