@@ -1,3 +1,4 @@
+const GameVersion = 1;
 
 const PlayerCount = 1;
 const CreationStarCount = 20;
@@ -208,6 +209,10 @@ class CommonGame {
         let r = randbetween(MinStarRadius, MaxStarRadius);
         star.radius = r;
         star.mass = r * 1e12;
+        if (GameVersion > 2) {
+            let issink = randbetween(1, 100) < 50;
+            star.gravitydir = issink ? -1 : 1;
+        }
         this.numStars++;
         return true;
     }

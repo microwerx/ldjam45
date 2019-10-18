@@ -402,7 +402,7 @@ class GravityObject {
             return;
         let x = gobj.dirTo(this);
         let massRatio = this.mass * gobj.mass;
-        let a = this.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 2.0), p);
+        let a = gobj.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 2.0), p);
         this.a.accum(x, a);
     }
     /**
@@ -612,8 +612,11 @@ class CommonGame {
         star.active = true;
         star.x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
         let r = randbetween(MinStarRadius, MaxStarRadius);
+        let issink = randbetween(1, 100) < 50;
         star.radius = r;
         star.mass = r * 1e12;
+        star.gravitydir = issink ? -1 : 1;
+        hflog.log("issink: " + star.gravitydir);
         this.numStars++;
         return true;
     }

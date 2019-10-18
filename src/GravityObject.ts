@@ -17,7 +17,7 @@ class GravityObject {
      * @param mass mass in kilograms of this object
      */
     constructor(
-        readonly gravitydir = -1,
+        public gravitydir = -1,
         public mass = 1,
         public radius = 1,
         public xor: LibXOR,
@@ -143,7 +143,7 @@ class GravityObject {
         if (r > maxdist) return;
         let x = gobj.dirTo(this);
         let massRatio = this.mass * gobj.mass;
-        let a = this.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 2.0), p);
+        let a = gobj.gravitydir * G_a * massRatio / Math.pow(Math.max(r, 2.0), p);
         this.a.accum(x, a);
     }
 
