@@ -14,7 +14,7 @@ namespace XOR {
         private length_ = 0;
         private objects: GravityObject[];
 
-        unknownObject = new GravityObject(-1, 1, 1, this.xor, this.objects);
+        unknownObject = new GameObject(this);
 
         constructor(public xor: LibXOR) { }
 
