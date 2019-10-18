@@ -13,15 +13,24 @@ namespace XOR {
         private arrayInfo = new Map<number, ArrayIndexInfo>();
         private length_ = 0;
         private objects = new Array<GameObject>();
+        private arrayTypeNames = new Map<string, number>();
 
         unknownObject = new GameObject();
 
         constructor(public xor: LibXOR) { }
 
-        add(index: number, count: number) {
+        add(typeName: string, index: number, count: number): void {
+            if (index <= 0) {
+                hflog.error("game object type must be > 0");
+                return;
+            }
+            if (this.arrayTypeNames.has(typeName)) {
+                hflog.error("game object type already used!");
+            }
             let length = this.objects.length;
             this.arrayInfo.set(index | 0,
                 new ArrayIndexInfo(length, count));
+            this.arrayTypeNames.set(typeName, index | 0);
             this.objects.length = length + count;
             for (let i = 0; i < count; i++) {
                 this.objects[i + length] = null;
@@ -64,6 +73,13 @@ namespace XOR {
                 return;
             }
             this.objects[i + ainfo.first] = gobj;
+        }
+
+        getType(typeName: string): number {
+            if (this.arrayTypeNames.has(typeName)) {
+                return this.arrayTypeNames.get(typeName);
+            }
+            return 0;
         }
     }
 }
