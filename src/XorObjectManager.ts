@@ -14,7 +14,7 @@ namespace XOR {
         private length_ = 0;
         private objects = new Array<GameObject>();
 
-        unknownObject = new GameObject(this);
+        unknownObject = new GameObject();
 
         constructor(public xor: LibXOR) { }
 
