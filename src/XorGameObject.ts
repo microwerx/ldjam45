@@ -6,6 +6,7 @@ namespace XOR {
         objectType: number = 0;
         arrayIndex: number = -1;
         gobjs: GameObjectManager | null = null;
+        active = false;
 
         constructor() { }
 

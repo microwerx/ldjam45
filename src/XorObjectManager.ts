@@ -17,8 +17,18 @@ namespace XOR {
 
         unknownObject = new GameObject();
 
+        /**
+         * 
+         * @param xor a reference to the LibXOR library
+         */
         constructor(public xor: LibXOR) { }
 
+        /**
+         * 
+         * @param typeName The string used to reference this type
+         * @param gameObjectType a positive integer that indexes this object type
+         * @param count The maximum number of objects of this object type
+         */
         add(typeName: string, gameObjectType: number, count: number): void {
             if (gameObjectType <= 0) {
                 hflog.error("game object type must be > 0");
