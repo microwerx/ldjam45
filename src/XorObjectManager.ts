@@ -37,5 +37,10 @@ namespace XOR {
             }
             return obj;
         }
+
+        set(index: number, i: number, gobj: GameObject) {
+            gobj.objectType = index;
+            gobj.arrayIndex = i;
+        }
     }
 }

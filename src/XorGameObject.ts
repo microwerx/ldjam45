@@ -2,9 +2,10 @@
 
 namespace XOR {
     export class GameObject {
-        private objectType: number = -1;
-        private ArrayIndex: number = -1;
+        objectType: number = -1;
+        arrayIndex: number = -1;
+        gobjs: GameObjectManager | null = null;
 
-        constructor(public gobjs: GameObjectManager) { }
+        constructor() { }
     }
 }
