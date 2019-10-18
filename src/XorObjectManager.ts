@@ -19,8 +19,8 @@ namespace XOR {
 
         constructor(public xor: LibXOR) { }
 
-        add(typeName: string, index: number, count: number): void {
-            if (index <= 0) {
+        add(typeName: string, gameObjectType: number, count: number): void {
+            if (gameObjectType <= 0) {
                 hflog.error("game object type must be > 0");
                 return;
             }
@@ -28,20 +28,20 @@ namespace XOR {
                 hflog.error("game object type already used!");
             }
             let length = this.objects.length;
-            this.arrayInfo.set(index | 0,
+            this.arrayInfo.set(gameObjectType | 0,
                 new ArrayIndexInfo(length, count));
-            this.arrayTypeNames.set(typeName, index | 0);
+            this.arrayTypeNames.set(typeName, gameObjectType | 0);
             this.objects.length = length + count;
             for (let i = 0; i < count; i++) {
                 this.objects[i + length] = null;
             }
         }
 
-        get(index: number, i: number): GameObject | null {
-            if (!this.arrayInfo.has(index)) {
+        get(gameObjectType: number, i: number): GameObject | null {
+            if (!this.arrayInfo.has(gameObjectType)) {
                 return null;
             }
-            let ainfo = this.arrayInfo.get(index);
+            let ainfo = this.arrayInfo.get(gameObjectType);
             if (i < 0 && i >= ainfo.length) { return this.unknownObject; }
             let obj = this.objects[i + ainfo.first];
             if (!obj) {
@@ -50,24 +50,24 @@ namespace XOR {
             return obj;
         }
 
-        safeget(index: number, i: number): GameObject {
-            let obj = this.safeget(index, i);
+        safeget(gameObjectType: number, i: number): GameObject {
+            let obj = this.safeget(gameObjectType, i);
             if (!obj) {
-                hflog.error("GameObject " + index + "/" + i + " does not exist!");
+                hflog.error("GameObject " + gameObjectType + "/" + i + " does not exist!");
                 return this.unknownObject;
             }
             return obj;
         }
 
-        set(index: number, i: number, gobj: GameObject) {
-            if (this.arrayInfo.has(index)) {
-                hflog.error("Trying to set unknown game object type " + index);
+        set(gameObjectType: number, i: number, gobj: GameObject) {
+            if (this.arrayInfo.has(gameObjectType)) {
+                hflog.error("Trying to set unknown game object type " + gameObjectType);
                 return;
             }
-            gobj.objectType = index;
+            gobj.objectType = gameObjectType;
             gobj.arrayIndex = i;
             gobj.gobjs = this;
-            const ainfo = this.arrayInfo.get(index);
+            const ainfo = this.arrayInfo.get(gameObjectType);
             if (i < 0 || i >= ainfo.length) {
                 hflog.error("Trying to set unknown game object index " + i);
                 return;
