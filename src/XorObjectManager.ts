@@ -53,7 +53,7 @@ namespace XOR {
         safeget(gameObjectType: number, i: number): GameObject {
             let obj = this.safeget(gameObjectType, i);
             if (!obj) {
-                hflog.error("GameObject " + gameObjectType + "/" + i + " does not exist!");
+                hflog.error("GameObject { type: " + gameObjectType + ", index: " + i + " } does not exist!");
                 return this.unknownObject;
             }
             return obj;

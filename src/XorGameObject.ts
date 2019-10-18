@@ -3,7 +3,7 @@
 namespace XOR {
     export class GameObject {
         objectName: string = "";
-        objectType: number = -1;
+        objectType: number = 0;
         arrayIndex: number = -1;
         gobjs: GameObjectManager | null = null;
 
