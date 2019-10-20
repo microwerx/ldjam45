@@ -439,6 +439,7 @@ class GravityObject {
         return GTE.clamp(this.distanceBetween(gobj) * -5, 0, 100);
     }
 }
+const GameVersion = 1;
 const PlayerCount = 1;
 const CreationStarCount = 20;
 const StarCount = 20;
@@ -460,6 +461,9 @@ const MaxPlanetoidRadius = 2.5;
 const NOTHING = 0;
 const STAR = 1;
 const PLANETOID = 2;
+const PlanetoidDrainSpeed = 0.25;
+const PlanetoidRegenSpeed = 0.0025;
+const PlayerRegenSpeed = 0.0025;
 const SOUND_PLAYER_DEAD = 0;
 const SOUND_PLANETOID_DEAD = 1;
 const SOUND_CREATIONSTAR_DEAD = 2;
@@ -612,11 +616,12 @@ class CommonGame {
         star.active = true;
         star.x.reset(tx + i * SpaceBetweenStars, ty + j * SpaceBetweenStars, 0);
         let r = randbetween(MinStarRadius, MaxStarRadius);
-        let issink = randbetween(1, 100) < 50;
         star.radius = r;
         star.mass = r * 1e12;
-        star.gravitydir = issink ? -1 : 1;
-        hflog.log("issink: " + star.gravitydir);
+        if (GameVersion > 2) {
+            let issink = randbetween(1, 100) < 50;
+            star.gravitydir = issink ? -1 : 1;
+        }
         this.numStars++;
         return true;
     }
@@ -739,6 +744,7 @@ class EndoSystemGame {
                 continue;
             // planetoid.active = true;
             planetoid.resetForces();
+            planetoid.life += PlanetoidRegenSpeed * this.xor.dt;
             // allow planetoids to interact with stars
             for (let j = 0; j < this.common.numStars; j++) {
                 let star = gobjs[StarIndex + j];
@@ -788,6 +794,7 @@ class EndoSystemGame {
                 continue;
             // player.active = true;
             player.resetForces();
+            player.life += PlayerRegenSpeed * this.xor.dt;
             // TODO: allow player to interact with creation stars
             for (let j = 0; j < this.common.numCreationStars; j++) {
                 let star = gobjs[CreationStarIndex + j];
@@ -807,7 +814,7 @@ class EndoSystemGame {
                 if (!planetoid.active)
                     continue;
                 if (player.distanceBetween(planetoid) < 0) {
-                    planetoid.life -= this.xor.dt;
+                    planetoid.life -= PlanetoidDrainSpeed * this.xor.dt;
                     if (planetoid.life > 0) {
                         this.common.sfx(SOUND_PLAYER_MINING);
                     }
@@ -1242,8 +1249,9 @@ class Game {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
+        let v = 1.0 - gobj.life;
         if (gobj.sink)
-            rc.uniform3f("Kd", Vector3.make(0, 1, 1));
+            rc.uniform3f("Kd", Vector3.make(v, 1 - v, 1 - v));
         if (gobj.vent)
             rc.uniform3f("Kd", Vector3.make(1, 0, 0));
         this.xor.meshes.render('geosphere', rc);
@@ -1563,6 +1571,10 @@ class App {
         this.SPACEbutton = xor.input.checkKeys([" ", "Space"]);
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
+        let resetKeys = [" ", "Escape", "Space", "Enter", "Tab"];
+        for (let k of resetKeys) {
+            xor.input.keys.set(k, 0.0);
+        }
         this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
         this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
         this.newENTERbutton.pressed = this.ENTERbutton > 0.0;

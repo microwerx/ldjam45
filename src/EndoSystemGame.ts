@@ -52,6 +52,8 @@ class EndoSystemGame {
             // planetoid.active = true;
             planetoid.resetForces();
 
+            planetoid.life += PlanetoidRegenSpeed * this.xor.dt;
+
             // allow planetoids to interact with stars
             for (let j = 0; j < this.common.numStars; j++) {
                 let star = gobjs[StarIndex + j];
@@ -107,6 +109,7 @@ class EndoSystemGame {
 
             // player.active = true;
             player.resetForces();
+            player.life += PlayerRegenSpeed * this.xor.dt;
 
             // TODO: allow player to interact with creation stars
             for (let j = 0; j < this.common.numCreationStars; j++) {
@@ -129,7 +132,7 @@ class EndoSystemGame {
                 if (!planetoid.active) continue;
 
                 if (player.distanceBetween(planetoid) < 0) {
-                    planetoid.life -= this.xor.dt;
+                    planetoid.life -= PlanetoidDrainSpeed * this.xor.dt;
                     if (planetoid.life > 0) {
                         this.common.sfx(SOUND_PLAYER_MINING);
                     } else {

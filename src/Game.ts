@@ -367,7 +367,8 @@ class Game {
         let wm = Matrix4.makeTranslation3(gobj.x);
         wm.scale(gobj.radius, gobj.radius, gobj.radius);
         rc.uniformMatrix4f("WorldMatrix", wm);
-        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(0, 1, 1));
+        let v = 1.0 - gobj.life;
+        if (gobj.sink) rc.uniform3f("Kd", Vector3.make(v, 1 - v, 1 - v));
         if (gobj.vent) rc.uniform3f("Kd", Vector3.make(1, 0, 0));
         this.xor.meshes.render('geosphere', rc);
     }

@@ -30,6 +30,10 @@ const NOTHING = 0;
 const STAR = 1;
 const PLANETOID = 2;
 
+const PlanetoidDrainSpeed = 0.25;
+const PlanetoidRegenSpeed = 0.0025;
+const PlayerRegenSpeed = 0.0025;
+
 const SOUND_PLAYER_DEAD = 0;
 const SOUND_PLANETOID_DEAD = 1;
 const SOUND_CREATIONSTAR_DEAD = 2;

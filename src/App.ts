@@ -258,6 +258,11 @@ class App {
         this.ENTERbutton = xor.input.checkKeys(["Enter"]);
         this.TABbutton = xor.input.checkKeys(["Tab"]);
 
+        let resetKeys = [" ", "Escape", "Space", "Enter", "Tab"];
+        for (let k of resetKeys) {
+            xor.input.keys.set(k, 0.0);
+        }
+
         this.newSPACEbutton.pressed = this.SPACEbutton > 0.0;
         this.newESCAPEbutton.pressed = this.ESCAPEbutton > 0.0;
         this.newENTERbutton.pressed = this.ENTERbutton > 0.0;
